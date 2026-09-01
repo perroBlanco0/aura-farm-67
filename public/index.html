@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dona y farmea aura 67 🐱</title>
+<link rel="preconnect" href="https://cataas.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@400;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+  :root { --p:#7c3aed; --p2:#ec4899; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100vh; font-family:'Nunito',sans-serif;
+    background:linear-gradient(135deg,#1e1b4b,#4c1d95 45%,#831843);
+    color:#fff; display:flex; align-items:center; justify-content:center; padding:24px;
+    overflow-x:hidden;
+  }
+  .sticker { position:fixed; width:120px; opacity:.9; pointer-events:none; animation:float 6s ease-in-out infinite; filter:drop-shadow(0 8px 20px rgba(0,0,0,.5)); border-radius:16px; }
+  .s1{top:4%;left:3%}.s2{bottom:6%;left:6%;animation-delay:1s}.s3{top:8%;right:4%;animation-delay:2s}.s4{bottom:5%;right:5%;animation-delay:3s}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-18px) rotate(4deg)}}
+  .card {
+    width:100%; max-width:520px; background:rgba(255,255,255,.08); backdrop-filter:blur(12px);
+    border:2px solid rgba(255,255,255,.18); border-radius:24px; padding:32px; text-align:center;
+    box-shadow:0 24px 60px rgba(0,0,0,.45); z-index:2;
+  }
+  h1 { font-family:'Luckiest Guy',cursive; font-size:2.1rem; margin:.2em 0; letter-spacing:1px;
+       background:linear-gradient(90deg,#fde047,#f472b6,#38bdf8); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .sub { opacity:.85; margin-bottom:22px; }
+  .aura { font-family:'Luckiest Guy',cursive; font-size:3.4rem; color:#fde047; text-shadow:0 0 24px #f472b6; margin:6px 0; }
+  label { display:block; text-align:left; font-weight:800; margin:14px 0 6px; font-size:.9rem; }
+  input, select {
+    width:100%; padding:13px 14px; border-radius:14px; border:2px solid rgba(255,255,255,.25);
+    background:rgba(0,0,0,.25); color:#fff; font-size:1rem; font-family:inherit;
+  }
+  input:focus, select:focus { outline:none; border-color:var(--p2); }
+  button {
+    margin-top:22px; width:100%; padding:15px; border:0; border-radius:16px; cursor:pointer;
+    font-family:'Luckiest Guy',cursive; font-size:1.25rem; letter-spacing:1px; color:#1e1b4b;
+    background:linear-gradient(90deg,#fde047,#f472b6); transition:transform .15s;
+  }
+  button:hover { transform:scale(1.03); }
+  .foot { margin-top:16px; font-size:.75rem; opacity:.6; }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+  .chip { background:rgba(255,255,255,.14); border-radius:999px; padding:5px 12px; font-size:.75rem; font-weight:800; }
+
+  @media (max-width:640px) {
+    body { padding:14px; align-items:flex-start; }
+    .card { padding:22px 18px; border-radius:20px; margin:auto 0; }
+    h1 { font-size:1.6rem; }
+    .aura { font-size:2.6rem; }
+    .sticker { width:78px; opacity:.45; }
+    .s1{top:2%;left:1%}.s2{bottom:2%;left:1%}.s3{top:2%;right:1%}.s4{bottom:2%;right:1%}
+    input, select { font-size:16px; }
+    button { font-size:1.1rem; padding:14px; }
+  }
+  @media (max-width:380px) { .sticker { display:none; } }
+
+  .swal2-popup { max-width:94vw; }
+  .swal2-image { max-width:80%; height:auto; }
+  .sw-row { display:flex; gap:8px; }
+  .sw-row .swal2-input { width:100%; margin-left:0; margin-right:0; }
+</style>
+</head>
+<body>
+<img class="sticker s1" loading="lazy" decoding="async" src="https://cataas.com/cat/says/67?fontSize=60&fontColor=yellow&width=260&type=square" alt="gato 67" />
+<img class="sticker s2" loading="lazy" decoding="async" src="https://cataas.com/cat/says/AURA?fontSize=48&fontColor=cyan&width=260&type=square" alt="gato aura" />
+<img class="sticker s3" loading="lazy" decoding="async" src="https://cataas.com/cat/says/DONA?fontSize=48&fontColor=orange&width=260&type=square" alt="gato dona" />
+<img class="sticker s4" loading="lazy" decoding="async" src="https://cataas.com/cat/says/xd?fontSize=60&fontColor=white&width=260&type=square" alt="gato xd" />
+
+<main class="card">
+  <div class="aura">6 7</div>
+  <h1>Farmeo de Aura Oficial 🐱</h1>
+  <p class="sub">Dona (ficticiamente) y sube +999 de aura al instante.</p>
+  <div class="chips"><span class="chip">+aura</span><span class="chip">nivel 67</span><span class="chip">gatos meme</span><span class="chip">serverless</span></div>
+
+  <form id="f" autocomplete="off">
+    <label for="nombre">¿Cómo te llamas, leyenda?</label>
+    <input id="nombre" required placeholder="Ej: El Aura Farmer" />
+
+    <label for="email">Tu correo (ahí te llega el diploma de aura)</label>
+    <input id="email" type="email" required placeholder="tucorreo@ejemplo.com" />
+
+    <label for="monto">¿Cuánto deseas donar? (💸 ficticio)</label>
+    <input id="monto" type="number" min="1" step="1" required placeholder="67" value="67" />
+
+    <label for="moneda">Moneda</label>
+    <select id="moneda">
+      <option>CLP</option><option>USD</option><option>MXN</option><option>Aura Coins 🐱</option>
+    </select>
+
+    <button type="submit">Donar y farmear aura ✨</button>
+  </form>
+  <p class="foot">Sitio de broma. No se procesa ningún pago ni se guarda ningún dato de tarjeta.</p>
+</main>
+
+<script>
+const API_URL = "https://TU-PROJECT-REF.supabase.co/functions/v1/donar";
+const cat = (t, c) => `https://cataas.com/cat/says/${encodeURIComponent(t)}?fontSize=60&fontColor=${c}&width=420&type=square`;
+
+['te la creiste','aura +999','seguro?'].forEach(t => { new Image().src = cat(t, t === 'te la creiste' ? 'red' : 'lime'); });
+
+document.getElementById('f').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const donacion = {
+    nombre: document.getElementById('nombre').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    monto: Number(document.getElementById('monto').value),
+    moneda: document.getElementById('moneda').value
+  };
+
+  const conf = await Swal.fire({
+    title: `¿Donar ${donacion.monto} ${donacion.moneda}?`,
+    text: 'Esto te dará aura instantánea, no hay vuelta atrás.',
+    imageUrl: cat('seguro?', 'yellow'), imageWidth: 260, imageAlt: 'gato',
+    showCancelButton: true, confirmButtonText: 'Sí, soy generoso 😼',
+    cancelButtonText: 'No, soy pobre', confirmButtonColor: '#7c3aed', cancelButtonColor: '#ec4899',
+    background: '#1e1b4b', color: '#fff'
+  });
+  if (!conf.isConfirmed) {
+    Swal.fire({ title: '-67 de aura 😿', imageUrl: cat('sin aura','white'), imageWidth: 240,
+      background: '#1e1b4b', color: '#fff', confirmButtonColor: '#7c3aed' });
+    return;
+  }
+
+  const pago = await Swal.fire({
+    title: 'Datos de tu tarjeta 💳',
+    html: `
+      <input id="sw-card" class="swal2-input" inputmode="numeric" maxlength="19" placeholder="4242 4242 4242 4242">
+      <div class="sw-row">
+        <input id="sw-exp" class="swal2-input" maxlength="5" placeholder="MM/AA">
+        <input id="sw-cvv" class="swal2-input" maxlength="4" placeholder="CVV">
+      </div>
+      <small style="opacity:.7">Conexión 100% insegura, confía 😺</small>`,
+    background: '#1e1b4b', color: '#fff', confirmButtonText: 'Pagar 💸',
+    confirmButtonColor: '#7c3aed', showCancelButton: true, cancelButtonText: 'Mejor no',
+    preConfirm: () => {
+      const c = document.getElementById('sw-card').value.replace(/\s/g, '');
+      if (c.length < 12) { Swal.showValidationMessage('Pon algo que parezca tarjeta, we 😹'); return false; }
+      return true;
+    }
+  });
+  if (!pago.isConfirmed) return;
+
+  await Swal.fire({
+    title: 'Procesando tu pago...', html: 'Contactando al banco de los gatos 🏦🐱',
+    timer: 2600, timerProgressBar: true, allowOutsideClick: false,
+    didOpen: () => Swal.showLoading(), background: '#1e1b4b', color: '#fff'
+  });
+
+  await Swal.fire({
+    title: '¡TE LA CREÍSTE WE! 😹',
+    html: `<b>67</b> — no te cobramos nada, ni guardamos tu tarjeta.<br>Esto era puro farmeo de aura.<br><br><b>Cierra para continuar.</b>`,
+    imageUrl: cat('te la creiste', 'red'), imageWidth: 300, imageAlt: 'gato meme',
+    background: '#1e1b4b', color: '#fff',
+    confirmButtonText: 'Cerrar para continuar', confirmButtonColor: '#ec4899',
+    allowOutsideClick: false, allowEscapeKey: false
+  });
+
+  Swal.fire({ title: 'Enviando tu diploma de aura...', didOpen: () => Swal.showLoading(),
+    allowOutsideClick: false, background: '#1e1b4b', color: '#fff' });
+
+  try {
+    const r = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(donacion)
+    });
+    const data = await r.json();
+    Swal.fire({
+      title: `+${data.aura ?? 999} de aura 🏆`,
+      html: `${data.mensaje ?? 'Listo'}<br><small>ID: ${data.id ?? '-'}</small>`,
+      imageUrl: cat('aura +999', 'lime'), imageWidth: 280,
+      background: '#1e1b4b', color: '#fff', confirmButtonColor: '#7c3aed'
+    });
+  } catch (err) {
+    Swal.fire({ icon: 'error', title: 'El gato se cayó del servidor', text: String(err),
+      background: '#1e1b4b', color: '#fff', confirmButtonColor: '#7c3aed' });
+  }
+});
+</script>
+</body>
+</html>
