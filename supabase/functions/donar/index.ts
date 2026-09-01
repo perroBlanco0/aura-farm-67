@@ -9,6 +9,9 @@ const CORS = {
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
+/** Único payload aceptado; ver public/governance.config.js. */
+const CAMPOS_PERMITIDOS = ["nombre", "email", "monto", "moneda"] as const;
+
 const reply = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: CORS });
 
@@ -57,11 +60,37 @@ async function enviarCorreo(
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return reply(200, { ok: true });
 
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+  const origenIp = req.headers.get("x-forwarded-for");
+  const userAgent = req.headers.get("user-agent");
+  const traza = (evento: string, recursoId: string | null, detalle: Record<string, unknown>) =>
+    supabase.from("auditoria").insert({
+      evento,
+      actor: "donante",
+      recurso: "donaciones",
+      recurso_id: recursoId,
+      detalle,
+      origen_ip: origenIp,
+      user_agent: userAgent,
+    });
+
   let body: Record<string, unknown>;
   try {
     body = await req.json();
   } catch {
+    await traza("validacion.rechazada", null, { motivo: "json invalido" });
     return reply(400, { mensaje: "JSON inválido, we 😿" });
+  }
+
+  const rechazados = Object.keys(body).filter(
+    (k) => !CAMPOS_PERMITIDOS.includes(k as typeof CAMPOS_PERMITIDOS[number]),
+  );
+  if (rechazados.length) {
+    await traza("validacion.rechazada", null, { motivo: "campos no permitidos", rechazados });
+    return reply(400, { mensaje: "Campos no permitidos 🚫", campos: rechazados });
   }
 
   const nombre = String(body.nombre ?? "Anónimo").slice(0, 60);
@@ -69,20 +98,24 @@ Deno.serve(async (req) => {
   const moneda = String(body.moneda ?? "CLP").slice(0, 20);
   const monto = Number(body.monto) || 0;
 
-  if (!email.includes("@")) return reply(400, { mensaje: "Correo inválido 😹" });
+  if (!email.includes("@")) {
+    await traza("validacion.rechazada", null, { motivo: "correo invalido" });
+    return reply(400, { mensaje: "Correo inválido 😹" });
+  }
 
   const id = crypto.randomUUID().slice(0, 8);
   const aura = 67 + Math.floor(Math.min(monto, 9999)) * 10;
   const correo = await enviarCorreo(email, nombre, monto, moneda, aura, id);
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
   const { error } = await supabase.from("donaciones").insert({
     id, nombre, email, monto, moneda, aura, correo_enviado: correo.enviado,
   });
   if (error) console.error("insert error", error.message);
+
+  await traza(correo.enviado ? "correo.enviado" : "correo.fallido", id, {
+    proveedor: "resend",
+    resultado: correo.enviado ? correo.respuesta : correo.motivo,
+  });
 
   return reply(200, {
     id,

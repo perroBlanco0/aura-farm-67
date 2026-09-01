@@ -42,6 +42,10 @@
   }
   button:hover { transform:scale(1.03); }
   .foot { margin-top:16px; font-size:.75rem; opacity:.6; }
+  .foot a { color:#fde047; }
+  .qr { display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:18px; }
+  .qr img { background:#fff; padding:6px; border-radius:12px; }
+  .qr span { font-size:.72rem; opacity:.7; }
   .chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
   .chip { background:rgba(255,255,255,.14); border-radius:999px; padding:5px 12px; font-size:.75rem; font-weight:800; }
 
@@ -92,11 +96,20 @@
 
     <button type="submit">Donar y farmear aura ✨</button>
   </form>
-  <p class="foot">Sitio de broma. No se procesa ningún pago ni se guarda ningún dato de tarjeta.</p>
+  <div class="qr">
+    <img id="qr-sitio" width="110" height="110" loading="lazy" alt="QR del sitio" />
+    <span>Escanea y comparte el farmeo 🐱</span>
+  </div>
+  <p class="foot">Sitio de broma. No se procesa ningún pago ni se guarda ningún dato de tarjeta.<br>
+    Datos tratados según la <a href="governance.config.js">política de gobernanza</a>: solo nombre, correo, monto y moneda; toda acción queda trazada.</p>
 </main>
 
 <script>
 const API_URL = "https://xphrqwsoluwynfuckcpc.supabase.co/functions/v1/donar";
+const qr = (dato, size = 220) =>
+  `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=8&data=${encodeURIComponent(dato)}`;
+
+document.getElementById('qr-sitio').src = qr(location.origin + location.pathname, 110);
 const cat = (t, c) => `https://cataas.com/cat/says/${encodeURIComponent(t)}?fontSize=60&fontColor=${c}&width=420&type=square`;
 
 ['te la creiste','aura +999','seguro?'].forEach(t => { new Image().src = cat(t, t === 'te la creiste' ? 'red' : 'lime'); });
@@ -168,7 +181,9 @@ document.getElementById('f').addEventListener('submit', async (e) => {
     const data = await r.json();
     Swal.fire({
       title: `+${data.aura ?? 999} de aura 🏆`,
-      html: `${data.mensaje ?? 'Listo'}<br><small>ID: ${data.id ?? '-'}</small>`,
+      html: `${data.mensaje ?? 'Listo'}<br><small>ID: ${data.id ?? '-'}</small>
+        <div class="qr"><img src="${qr(`${location.origin}${location.pathname}?diploma=${data.id ?? ''}`, 180)}"
+          width="150" height="150" alt="QR del diploma" /><span>Tu diploma en QR</span></div>`,
       imageUrl: cat('aura +999', 'lime'), imageWidth: 280,
       background: '#1e1b4b', color: '#fff', confirmButtonColor: '#7c3aed'
     });
