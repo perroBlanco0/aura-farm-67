@@ -30,7 +30,7 @@
 <main class="card form-card">
     <div class="brand"><span class="brand-mark">M</span><span>MICHI ARENA</span></div>
     <h1>EDITAR <span><?= esc($jugador['username']) ?></span></h1>
-    <p class="sub">Los cambios de Aura y AuraCoins se guardan vía stored procedure transaccional.</p>
+    <p class="sub">Edita el perfil del jugador. Los cambios se guardan de forma segura.</p>
 
     <?php if (! empty($error)): ?><p class="error"><?= esc($error) ?></p><?php endif ?>
 
@@ -46,15 +46,15 @@
                 <input id="email" name="email" type="email" value="<?= esc($jugador['email'] ?? '') ?>">
             </div>
             <div>
-                <label for="aura_actual">AURA ACTUAL</label>
+                <label for="aura_actual">AURA PERMANENTE</label>
                 <input id="aura_actual" name="aura_actual" type="number" min="0" required value="<?= esc($jugador['aura_actual']) ?>">
             </div>
             <div>
-                <label for="aura_max">AURA MÁX</label>
+                <label for="aura_max">AURA PERM. MÁX</label>
                 <input id="aura_max" name="aura_max" type="number" min="1" required value="<?= esc($jugador['aura_max']) ?>">
             </div>
             <div>
-                <label for="auracoins">AURACOINS</label>
+                <label for="auracoins">$MICHI</label>
                 <input id="auracoins" name="auracoins" type="number" min="0" required value="<?= esc($jugador['auracoins']) ?>">
             </div>
         </div>

@@ -85,7 +85,7 @@
                 <thead>
                     <tr>
                         <th>#</th><th>Usuario</th><th>Correo</th><th>Rol</th>
-                        <th>Aura</th><th>$AURA</th><th>W/L</th><th>Estado</th><th>Acciones</th>
+                        <th>Aura perm.</th><th>$MICHI</th><th>W/L</th><th>Estado</th><th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -97,12 +97,12 @@
                         </td>
                         <td data-label="Correo" class="email-cell"><?= esc($j['email'] ?? '—') ?></td>
                         <td data-label="Rol"><span class="pill <?= (int) $j['es_admin'] === 1 ? 'pill-admin' : 'pill-user' ?>"><?= (int) $j['es_admin'] === 1 ? 'ADMIN' : 'MICHY' ?></span></td>
-                        <td data-label="Aura"><?= esc($j['aura_actual']) ?>/<?= esc($j['aura_max']) ?></td>
-                        <td data-label="$AURA"><?= esc(formatear_auracoins((int) $j['auracoins'])) ?></td>
+                        <td data-label="Aura perm."><?= esc($j['aura_actual']) ?>/<?= esc($j['aura_max']) ?></td>
+                        <td data-label="$MICHI"><?= esc(str_replace('$AURA', '$MICHI', formatear_auracoins((int) $j['auracoins']))) ?></td>
                         <td data-label="W/L"><?= esc($j['victorias']) ?>/<?= esc($j['derrotas']) ?></td>
                         <td data-label="Estado">
                             <?php if ($j['eliminado_en'] !== null): ?>
-                                <span class="pill pill-out">MIMIDO</span>
+                                <span class="pill pill-out">ELIMINADO</span>
                             <?php else: ?>
                                 <span class="pill pill-user">ACTIVO</span>
                             <?php endif ?>

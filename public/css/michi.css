@@ -71,6 +71,11 @@ h1, h2, h3, .brand, button, .btn { font-family: Fredoka, "Archivo Black", sans-s
 /* nav tipo pills */
 .topnav, .nav { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .topnav a, .nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
     padding: 10px 16px;
     border-radius: 999px;
     font-size: .8rem;
@@ -169,7 +174,7 @@ button:disabled, .btn:disabled { opacity: .45; cursor: not-allowed; transform: n
 .btn-block { width: 100%; }
 
 /* avisos inline */
-.error, .ok {
+.error, .ok, .info {
     padding: 13px 16px;
     border-radius: 14px;
     font-size: .88rem;
@@ -178,6 +183,7 @@ button:disabled, .btn:disabled { opacity: .45; cursor: not-allowed; transform: n
 }
 .error { background: #ffe5e8; border: 2px solid #ffc2ca; color: #c23045; }
 .ok { background: #ecffd6; border: 2px solid #c8f59a; color: #4d7a00; }
+.info { background: #e3f0ff; border: 2px solid #b9d6f7; color: #2456a6; }
 
 /* pills de estado */
 .pill {

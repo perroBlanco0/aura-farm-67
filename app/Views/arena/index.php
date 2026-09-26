@@ -36,12 +36,6 @@
         }
         h1 span { color: var(--lime); }
         .lead { max-width: 560px; color: #eaf6ff; font-size: clamp(1rem, 2vw, 1.12rem); font-weight: 700; line-height: 1.65; }
-        .tags { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; position: relative; z-index: 1; }
-        .tag {
-            padding: 8px 14px; border-radius: 999px;
-            background: rgba(255,255,255,.85); color: var(--ink);
-            font-size: .75rem; font-weight: 900;
-        }
         .cta-mapa {
             display: inline-flex; margin-top: 30px; padding: 17px 34px; position: relative; z-index: 1;
             font-size: 1.1rem;
@@ -68,7 +62,6 @@
         .stat span { color: var(--muted); font-size: .68rem; font-weight: 900; letter-spacing: .06em; }
         .hint { min-height: 38px; color: var(--muted); font-size: .8rem; font-weight: 700; line-height: 1.5; margin: 10px 0 18px; }
         .challenge form button { width: 100%; }
-        .rules { margin-top: 22px; color: var(--muted); font-size: .74rem; font-weight: 700; text-align: center; line-height: 1.55; }
 
         @media (max-width: 820px) {
             .shell { padding-top: 20px; }
@@ -98,24 +91,18 @@
                 <a href="<?= site_url('mantenedor') ?>">Mantenedor</a>
             <?php endif ?>
             <a href="<?= site_url('salir') ?>">Salir</a>
-            <div class="balance"><?= esc(formatear_auracoins((int) $jugador['auracoins'])) ?></div>
+            <div class="balance"><?= esc(str_replace('$AURA', '$MICHI', formatear_auracoins((int) $jugador['auracoins']))) ?></div>
         </div>
     </header>
 
     <section class="hero">
         <article class="copy">
             <div class="eyebrow">La arena de los gatos virales</div>
-            <h1>APUESTA.<br>TIRA MICHI.<br><span>FARMEA AURA.</span></h1>
+            <h1>APUESTA.<br>TIRA MICHI.<br><span>FARMEA $MICHI.</span></h1>
             <p class="lead">
                 Entra a la arena donde Oiia Oiia Cat, Big Floppa y el Michi Llorón
                 convierten el cringe en daño crítico. Gana el pozo o anda a llorar al TikTok.
             </p>
-            <div class="tags">
-                <span class="tag">OIAA POWER ×1.5</span>
-                <span class="tag">RAREZA 67</span>
-                <span class="tag">ESCUDO CHILL</span>
-                <span class="tag">ROBO DE AURA</span>
-            </div>
             <a class="btn cta-mapa" href="<?= site_url('mapa') ?>">🧭 BUSCAR MICHIS</a>
         </article>
 
@@ -125,14 +112,14 @@
                 <div>
                     <small>Entrenador michi</small>
                     <h2><?= esc($jugador['username']) ?></h2>
-                    <span class="aura-line"><?= esc($jugador['aura_actual']) ?> / <?= esc($jugador['aura_max']) ?> Aura</span>
+                    <span class="aura-line"><?= esc($jugador['aura_actual']) ?> / <?= esc($jugador['aura_max']) ?> Aura permanente</span>
                 </div>
             </div>
 
             <div class="stats">
                 <div class="stat"><strong><?= esc($jugador['victorias']) ?></strong><span>VICTORIAS</span></div>
                 <div class="stat"><strong><?= esc($jugador['derrotas']) ?></strong><span>DERROTAS</span></div>
-                <div class="stat"><strong><?= esc(calcular_barra_aura((int) $jugador['aura_actual'], (int) $jugador['aura_max'])) ?>%</strong><span>AURA</span></div>
+                <div class="stat"><strong><?= esc(calcular_barra_aura((int) $jugador['aura_actual'], (int) $jugador['aura_max'])) ?>%</strong><span>AURA PERMANENTE</span></div>
             </div>
 
             <?php if ($error !== null): ?>
@@ -141,18 +128,17 @@
 
             <form action="<?= site_url('arena/iniciar') ?>" method="post">
                 <?= csrf_field() ?>
-                <label for="apuesta">¿Cuánta Aura pones en juego?</label>
+                <label for="apuesta">¿Cuánto $MICHI pones en juego?</label>
                 <select id="apuesta" name="apuesta" required>
                     <?php foreach ([100, 250, 500, 1000, 2000] as $apuesta): ?>
                         <option value="<?= $apuesta ?>" <?= $apuesta > (int) $jugador['auracoins'] ? 'disabled' : '' ?>>
-                            <?= esc(formatear_auracoins($apuesta)) ?>
+                            <?= esc(str_replace('$AURA', '$MICHI', formatear_auracoins($apuesta))) ?>
                         </option>
                     <?php endforeach ?>
                 </select>
-                <p class="hint">La apuesta se retiene al iniciar. Si ganas, cobras el pozo doble; si pierdes, recibes −100 de Aura permanente.</p>
+                <p class="hint">Apuestas $MICHI de tu saldo. Ganas → cobras el doble. Pierdes → la apuesta se pierde y tu Aura permanente −100.</p>
                 <button type="submit">⚔️ DESAFIAR AL MICHI BOT</button>
             </form>
-            <p class="rules">Economía y combate procesados de forma transaccional en MySQL.</p>
         </aside>
     </section>
 </main>

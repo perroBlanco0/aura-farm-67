@@ -33,21 +33,20 @@
         .links { margin-top: 20px; display: flex; justify-content: center; font-size: .85rem; }
         .links a { color: var(--sky-1); text-decoration: none; font-weight: 900; }
         .links a:hover { text-decoration: underline; }
-        .demo-hint { margin-top: 16px; color: var(--muted); font-size: .75rem; text-align: center; font-weight: 700; }
-        .demo-hint code { color: #b87400; background: #fff3cf; border-radius: 7px; padding: 2px 7px; }
     </style>
 </head>
 <body>
 <main class="splash">
     <img class="mascot" src="/img/cartas/michi.jpg" alt="Michi, la mascota de la arena">
     <h1 class="logo">MICHI <span>ARENA</span></h1>
-    <p class="tagline">Atrapa michis virales, apuesta Aura y gana el pozo.</p>
+    <p class="tagline">Atrapa michis virales, apuesta $MICHI y gana el pozo.</p>
 
     <div class="card form-card">
         <h2>ENTRA A LA ARENA</h2>
-        <p class="sub">Duelos de gatos virales y apuestas de Aura.</p>
+        <p class="sub">Duelos de gatos virales y apuestas de $MICHI.</p>
 
-        <?php if (! empty($error)): ?><p class="error"><?= esc($error) ?></p><?php endif ?>
+        <?php $esAviso = ! empty($error) && (stripos($error, 'inicia sesión') !== false || stripos($error, 'entrar') !== false); ?>
+        <?php if (! empty($error)): ?><p class="<?= $esAviso ? 'info' : 'error' ?>"><?= esc($error) ?></p><?php endif ?>
         <?php if (! empty($ok)): ?><p class="ok"><?= esc($ok) ?></p><?php endif ?>
 
         <form action="<?= site_url('login') ?>" method="post">
@@ -63,7 +62,6 @@
             <a href="<?= site_url('recuperar') ?>">Olvidé mi clave</a>
             <a href="<?= site_url('registro') ?>" style="margin-left:18px">Crear cuenta</a>
         </div>
-        <p class="demo-hint">Demo: <code>demo</code> / <code>nirvana</code></p>
     </div>
 </main>
 
@@ -71,7 +69,7 @@
 <script src="/js/michi.js"></script>
 <script>
 <?php if (! empty($error)): ?>
-MichiToast.fire({ icon: 'error', title: <?= json_encode((string) $error, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
+MichiToast.fire({ icon: '<?= $esAviso ? 'info' : 'error' ?>', title: <?= json_encode((string) $error, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
 <?php endif ?>
 <?php if (! empty($ok)): ?>
 MichiToast.fire({ icon: 'success', title: <?= json_encode((string) $ok, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
