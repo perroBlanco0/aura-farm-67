@@ -10,12 +10,10 @@ class Arena extends BaseController
 {
     protected $helpers = ['form', 'funciones', 'url'];
 
-    private const JUGADOR_DEMO_ID = 1;
-
     public function index(): string
     {
         $arena = new ArenaModel();
-        $jugador = $arena->obtenerJugador(self::JUGADOR_DEMO_ID);
+        $jugador = $arena->obtenerJugador($this->jugadorId());
 
         if ($jugador === null) {
             throw PageNotFoundException::forPageNotFound(
@@ -25,6 +23,7 @@ class Arena extends BaseController
 
         return view('arena/index', [
             'jugador' => $jugador,
+            'es_admin' => (int) session()->get('es_admin') === 1,
             'error' => session()->getFlashdata('error'),
         ]);
     }
@@ -38,7 +37,7 @@ class Arena extends BaseController
         }
 
         try {
-            $duelo = (new ArenaModel())->crearDuelo(self::JUGADOR_DEMO_ID, $apuesta);
+            $duelo = (new ArenaModel())->crearDuelo($this->jugadorId(), $apuesta);
         } catch (Throwable $error) {
             return redirect()->to('/arena')->with('error', $error->getMessage());
         }
@@ -55,13 +54,13 @@ class Arena extends BaseController
         $arena = new ArenaModel();
         $duelo = $arena->obtenerDuelo($id);
 
-        if ($duelo === null || (int) $duelo['retador_id'] !== self::JUGADOR_DEMO_ID) {
+        if ($duelo === null || (int) $duelo['retador_id'] !== $this->jugadorId()) {
             throw PageNotFoundException::forPageNotFound('Duelo no encontrado.');
         }
 
         return view('arena/duelo', [
             'duelo' => $duelo,
-            'mazo' => $arena->obtenerMazo(self::JUGADOR_DEMO_ID),
+            'mazo' => $arena->obtenerMazo($this->jugadorId()),
         ]);
     }
 
@@ -86,7 +85,12 @@ class Arena extends BaseController
         }
 
         try {
-            $resultado = (new ArenaModel())->lanzarCarta($dueloId, $cartaId, $turnoEsperado);
+            $resultado = (new ArenaModel())->lanzarCarta(
+                $dueloId,
+                $cartaId,
+                $turnoEsperado,
+                $this->jugadorId()
+            );
         } catch (Throwable $error) {
             return $this->response->setStatusCode(422)->setJSON([
                 'ok' => false,
@@ -105,5 +109,10 @@ class Arena extends BaseController
         $resultado['frase_resultado'] = frase_resultado_meme($resultado['estado']);
 
         return $this->response->setJSON($resultado);
+    }
+
+    private function jugadorId(): int
+    {
+        return (int) session()->get('jugador_id');
     }
 }

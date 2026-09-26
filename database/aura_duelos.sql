@@ -1,3 +1,8 @@
+-- Michi Arena · duelos de cartas de gatos virales y apuestas de Aura.
+-- Script completo e idempotente: crea esquema, migra columnas de auth,
+-- siembra jugadores/cartas/mazos y define toda la lógica de juego y
+-- economía como stored procedures transaccionales.
+
 CREATE DATABASE IF NOT EXISTS aura_duelos
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
@@ -7,13 +12,84 @@ USE aura_duelos;
 CREATE TABLE IF NOT EXISTS jugadores (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(80) NOT NULL,
+    email VARCHAR(190) NULL,
+    password_hash VARCHAR(255) NULL,
+    es_admin TINYINT(1) NOT NULL DEFAULT 0,
     aura_actual INT UNSIGNED NOT NULL DEFAULT 1000,
     aura_max INT UNSIGNED NOT NULL DEFAULT 1000,
     auracoins BIGINT UNSIGNED NOT NULL DEFAULT 0,
     victorias INT UNSIGNED NOT NULL DEFAULT 0,
     derrotas INT UNSIGNED NOT NULL DEFAULT 0,
-    UNIQUE KEY uq_jugadores_username (username)
+    eliminado_en TIMESTAMP NULL DEFAULT NULL,
+    UNIQUE KEY uq_jugadores_username (username),
+    UNIQUE KEY uq_jugadores_email (email)
 ) ENGINE=InnoDB;
+
+-- Columnas de auth para bases ya existentes (idempotente, MySQL 8 y MariaDB).
+SET @sql := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE jugadores ADD COLUMN email VARCHAR(190) NULL AFTER username',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = 'aura_duelos'
+      AND TABLE_NAME = 'jugadores'
+      AND COLUMN_NAME = 'email'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE jugadores ADD COLUMN password_hash VARCHAR(255) NULL AFTER email',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = 'aura_duelos'
+      AND TABLE_NAME = 'jugadores'
+      AND COLUMN_NAME = 'password_hash'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE jugadores ADD COLUMN es_admin TINYINT(1) NOT NULL DEFAULT 0 AFTER password_hash',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = 'aura_duelos'
+      AND TABLE_NAME = 'jugadores'
+      AND COLUMN_NAME = 'es_admin'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE jugadores ADD COLUMN eliminado_en TIMESTAMP NULL DEFAULT NULL',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = 'aura_duelos'
+      AND TABLE_NAME = 'jugadores'
+      AND COLUMN_NAME = 'eliminado_en'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE jugadores ADD UNIQUE KEY uq_jugadores_email (email)',
+        'SELECT 1'
+    )
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = 'aura_duelos'
+      AND TABLE_NAME = 'jugadores'
+      AND INDEX_NAME = 'uq_jugadores_email'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 CREATE TABLE IF NOT EXISTS cartas_meme (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -61,21 +137,50 @@ CREATE TABLE IF NOT EXISTS duelos_activos (
         FOREIGN KEY (oponente_bot_id) REFERENCES jugadores (id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS recuperacion_codigos (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    jugador_id INT UNSIGNED NOT NULL,
+    codigo_hash CHAR(64) NOT NULL,
+    expira_en TIMESTAMP NOT NULL,
+    usado_en TIMESTAMP NULL DEFAULT NULL,
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_recuperacion_jugador (jugador_id, usado_en),
+    CONSTRAINT fk_recuperacion_jugador
+        FOREIGN KEY (jugador_id) REFERENCES jugadores (id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Jugadores de semilla. demo/nirvana es admin del mantenedor.
+-- Los correos apuntan al namespace Testmail para verificar la entrega.
+-- Los hash bcrypt corresponden a 'nirvana' y 'michi123'.
 INSERT INTO jugadores (
     id,
     username,
+    email,
+    password_hash,
+    es_admin,
     aura_actual,
     aura_max,
     auracoins,
     victorias,
     derrotas
 ) VALUES
-    (1, 'AuraFarmer67', 1000, 1000, 2500, 0, 0),
-    (2, 'The Rizzler Bot', 1000, 1000, 999999, 0, 0)
+    (1, 'demo', 'vkwxq.demo@inbox.testmail.app',
+     '$2y$10$93xnV0ES5Ru6PdoeeCX/ke6vuJ950GYXzt.rftdpe7651sEEImB4S',
+     1, 1000, 1000, 2500, 0, 0),
+    (2, 'Michi Aburrido Bot', NULL, NULL, 0, 1000, 1000, 999999, 0, 0),
+    (3, 'michi_fan', 'vkwxq.fan@inbox.testmail.app',
+     '$2y$10$fVmB46HBUvzW56oQA/QoD.NCo./vOk80.vRl26mfy5egZbOEycx/S',
+     0, 1000, 1000, 1200, 0, 0),
+    (4, 'duelista_pro', 'vkwxq.pro@inbox.testmail.app',
+     '$2y$10$fVmB46HBUvzW56oQA/QoD.NCo./vOk80.vRl26mfy5egZbOEycx/S',
+     0, 1000, 1000, 800, 0, 0)
 ON DUPLICATE KEY UPDATE
     username = VALUES(username),
+    email = VALUES(email),
     aura_max = VALUES(aura_max);
 
+-- Cartas: gatos realmente virales en TikTok LATAM.
 INSERT INTO cartas_meme (
     id,
     nombre,
@@ -85,61 +190,14 @@ INSERT INTO cartas_meme (
     efecto_especial,
     imagen_url
 ) VALUES
-    (
-        1,
-        'GigaChad',
-        310,
-        180,
-        67,
-        'CRITICO_MEME',
-        'https://api.dicebear.com/9.x/adventurer/svg?seed=GigaChad&backgroundColor=ffd5dc'
-    ),
-    (
-        2,
-        'Gato Pescador',
-        190,
-        240,
-        23,
-        'ROBAR_AURA',
-        'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=GatoPescador&backgroundColor=c0aede'
-    ),
-    (
-        3,
-        'El Rizzler',
-        280,
-        140,
-        67,
-        'ROBAR_AURA',
-        'https://api.dicebear.com/9.x/adventurer/svg?seed=Rizzler&backgroundColor=ffdfbf'
-    ),
-    (
-        4,
-        'NPC Scripted',
-        165,
-        300,
-        12,
-        'ESCUDO_CHILL',
-        'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=NPCScripted&backgroundColor=b6e3f4'
-    ),
-    (
-        5,
-        'Capybara Chill',
-        145,
-        360,
-        42,
-        'ESCUDO_CHILL',
-        'https://api.dicebear.com/9.x/adventurer/svg?seed=CapybaraChill&backgroundColor=d1d4f9'
-    ),
-    (
-        6,
-        'Skibidi Doge',
-        250,
-        120,
-        31,
-        'CRITICO_MEME',
-        'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=SkibidiDoge&backgroundColor=ffdfbf'
-    )
+    (1, 'Oiia Oiia Cat', 310, 180, 67, 'CRITICO_MEME', '/img/cartas/oiia.jpg'),
+    (2, 'Chipi Chipi Chapa', 190, 240, 42, 'ROBAR_AURA', '/img/cartas/chipi.gif'),
+    (3, 'Big Floppa', 285, 150, 67, 'ROBAR_AURA', '/img/cartas/floppa.jpg'),
+    (4, 'Smudge de la Mesa', 165, 300, 34, 'ESCUDO_CHILL', '/img/cartas/smudge.jpg'),
+    (5, 'Michi Llorón', 145, 360, 45, 'ESCUDO_CHILL', '/img/cartas/lloron.jpg'),
+    (6, 'Beluga Atómico', 250, 120, 31, 'CRITICO_MEME', '/img/cartas/beluga.png')
 ON DUPLICATE KEY UPDATE
+    nombre = VALUES(nombre),
     ataque_aura = VALUES(ataque_aura),
     defensa_cringe = VALUES(defensa_cringe),
     rareza_nivel = VALUES(rareza_nivel),
@@ -152,8 +210,18 @@ SELECT 1, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
 INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
 SELECT 2, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
 
+INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
+SELECT 3, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
+
+INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
+SELECT 4, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
+
 DROP PROCEDURE IF EXISTS sp_iniciar_duelo_meme;
 DROP PROCEDURE IF EXISTS sp_jugar_carta_turno;
+DROP PROCEDURE IF EXISTS sp_admin_actualizar_jugador;
+DROP PROCEDURE IF EXISTS sp_eliminar_jugador_logico;
+DROP PROCEDURE IF EXISTS sp_generar_codigo_recuperacion;
+DROP PROCEDURE IF EXISTS sp_canjear_codigo_recuperacion;
 
 DELIMITER $$
 
@@ -185,7 +253,8 @@ BEGIN
     SELECT COUNT(*)
     INTO v_jugador_existe
     FROM jugadores
-    WHERE id = p_jugador_id;
+    WHERE id = p_jugador_id
+      AND eliminado_en IS NULL;
 
     IF v_jugador_existe = 0 THEN
         SIGNAL SQLSTATE '45000'
@@ -211,7 +280,7 @@ BEGIN
     SELECT id
     INTO v_bot_id
     FROM jugadores
-    WHERE username = 'The Rizzler Bot'
+    WHERE username = 'Michi Aburrido Bot'
     LIMIT 1;
 
     UPDATE jugadores
@@ -252,7 +321,8 @@ END$$
 CREATE PROCEDURE sp_jugar_carta_turno(
     IN p_duelo_id INT,
     IN p_carta_id INT,
-    IN p_turno_esperado INT
+    IN p_turno_esperado INT,
+    IN p_jugador_id INT
 )
 BEGIN
     DECLARE v_duelo_existe INT DEFAULT 0;
@@ -319,6 +389,11 @@ BEGIN
     FROM duelos_activos
     WHERE id = p_duelo_id
     FOR UPDATE;
+
+    IF v_retador_id <> p_jugador_id THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Este duelo no es tuyo, michi';
+    END IF;
 
     IF v_estado <> 'BATALLANDO' THEN
         SIGNAL SQLSTATE '45000'
@@ -411,7 +486,7 @@ BEGIN
         SET v_auracoins_movimiento = v_apuesta * 2;
         SET v_frase = CONCAT(
             v_carta_nombre,
-            ' mandó al bot directo al compilador del cringe. Aura infinita desbloqueada.'
+            ' giró tan fuerte que el bot quedó en modo mimir. El pozo es tuyo.'
         );
 
         UPDATE jugadores
@@ -451,7 +526,7 @@ BEGIN
             SET v_auracoins_movimiento = -v_apuesta;
             SET v_frase = CONCAT(
                 v_bot_carta_nombre,
-                ' te dejó sin Aura. El chat escribió F y el bot cobró la apuesta.'
+                ' te dejó sin Aura. El michi cobró la apuesta y el chat escribió F.'
             );
 
             UPDATE jugadores
@@ -468,7 +543,7 @@ BEGIN
                 v_bot_carta_nombre,
                 ' respondió con ',
                 v_dano_recibido,
-                '. El mogging continúa.'
+                '. La pelea de michis continúa.'
             );
         END IF;
     END IF;
@@ -505,6 +580,252 @@ BEGIN
         'frase', v_frase,
         'estado', v_estado
     ) AS resultado_json;
+END$$
+
+CREATE PROCEDURE sp_admin_actualizar_jugador(
+    IN p_jugador_id INT,
+    IN p_username VARCHAR(80),
+    IN p_email VARCHAR(190),
+    IN p_aura_actual INT,
+    IN p_aura_max INT,
+    IN p_auracoins BIGINT,
+    IN p_es_admin TINYINT
+)
+BEGIN
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_admins INT DEFAULT 0;
+    DECLARE v_era_admin INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    SELECT COUNT(*), COALESCE(MAX(es_admin), 0)
+    INTO v_existe, v_era_admin
+    FROM jugadores
+    WHERE id = p_jugador_id
+      AND eliminado_en IS NULL
+    FOR UPDATE;
+
+    IF v_existe = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Jugador no encontrado o eliminado';
+    END IF;
+
+    IF v_era_admin = 1 AND p_es_admin = 0 THEN
+        SELECT COUNT(*)
+        INTO v_admins
+        FROM jugadores
+        WHERE es_admin = 1
+          AND eliminado_en IS NULL;
+
+        IF v_admins <= 1 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'No puedes quitar al último admin de la arena';
+        END IF;
+    END IF;
+
+    UPDATE jugadores
+    SET
+        username = p_username,
+        email = p_email,
+        aura_actual = GREATEST(0, p_aura_actual),
+        aura_max = GREATEST(1, p_aura_max),
+        auracoins = GREATEST(0, p_auracoins),
+        es_admin = p_es_admin
+    WHERE id = p_jugador_id;
+
+    COMMIT;
+
+    SELECT
+        id,
+        username,
+        email,
+        es_admin,
+        aura_actual,
+        aura_max,
+        auracoins,
+        victorias,
+        derrotas
+    FROM jugadores
+    WHERE id = p_jugador_id;
+END$$
+
+CREATE PROCEDURE sp_eliminar_jugador_logico(
+    IN p_jugador_id INT,
+    IN p_solicitante_id INT
+)
+BEGIN
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_es_admin INT DEFAULT 0;
+    DECLARE v_admins INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    IF p_jugador_id = p_solicitante_id THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'No puedes eliminar tu propia cuenta en uso';
+    END IF;
+
+    START TRANSACTION;
+
+    SELECT COUNT(*), COALESCE(MAX(es_admin), 0)
+    INTO v_existe, v_es_admin
+    FROM jugadores
+    WHERE id = p_jugador_id
+      AND eliminado_en IS NULL
+    FOR UPDATE;
+
+    IF v_existe = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Jugador no encontrado o ya eliminado';
+    END IF;
+
+    IF v_es_admin = 1 THEN
+        SELECT COUNT(*)
+        INTO v_admins
+        FROM jugadores
+        WHERE es_admin = 1
+          AND eliminado_en IS NULL;
+
+        IF v_admins <= 1 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'No puedes eliminar al último admin de la arena';
+        END IF;
+    END IF;
+
+    UPDATE jugadores
+    SET
+        eliminado_en = NOW(),
+        email = NULL,
+        password_hash = NULL
+    WHERE id = p_jugador_id;
+
+    COMMIT;
+
+    SELECT
+        p_jugador_id AS id,
+        'ELIMINADO' AS estado;
+END$$
+
+CREATE PROCEDURE sp_generar_codigo_recuperacion(
+    IN p_email VARCHAR(190),
+    IN p_codigo_hash CHAR(64),
+    IN p_minutos INT
+)
+BEGIN
+    DECLARE v_jugador_id INT UNSIGNED DEFAULT 0;
+    DECLARE v_username VARCHAR(80);
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    SELECT id, username
+    INTO v_jugador_id, v_username
+    FROM jugadores
+    WHERE email = p_email
+      AND eliminado_en IS NULL
+      AND password_hash IS NOT NULL
+    LIMIT 1
+    FOR UPDATE;
+
+    IF v_jugador_id = 0 OR v_jugador_id IS NULL THEN
+        COMMIT;
+        SELECT 0 AS jugador_id, '' AS username, p_email AS email;
+    ELSE
+        UPDATE recuperacion_codigos
+        SET usado_en = NOW()
+        WHERE jugador_id = v_jugador_id
+          AND usado_en IS NULL;
+
+        INSERT INTO recuperacion_codigos (
+            jugador_id,
+            codigo_hash,
+            expira_en
+        ) VALUES (
+            v_jugador_id,
+            p_codigo_hash,
+            DATE_ADD(NOW(), INTERVAL p_minutos MINUTE)
+        );
+
+        COMMIT;
+
+        SELECT
+            v_jugador_id AS jugador_id,
+            v_username AS username,
+            p_email AS email;
+    END IF;
+END$$
+
+CREATE PROCEDURE sp_canjear_codigo_recuperacion(
+    IN p_email VARCHAR(190),
+    IN p_codigo_hash CHAR(64),
+    IN p_password_hash VARCHAR(255)
+)
+BEGIN
+    DECLARE v_jugador_id INT UNSIGNED DEFAULT 0;
+    DECLARE v_codigos INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    SELECT id
+    INTO v_jugador_id
+    FROM jugadores
+    WHERE email = p_email
+      AND eliminado_en IS NULL
+      AND password_hash IS NOT NULL
+    LIMIT 1
+    FOR UPDATE;
+
+    IF v_jugador_id IS NULL OR v_jugador_id = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El código no es válido o ya expiró';
+    END IF;
+
+    SELECT COUNT(*)
+    INTO v_codigos
+    FROM recuperacion_codigos
+    WHERE jugador_id = v_jugador_id
+      AND codigo_hash = p_codigo_hash
+      AND usado_en IS NULL
+      AND expira_en > NOW();
+
+    IF v_codigos = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El código no es válido o ya expiró';
+    END IF;
+
+    UPDATE recuperacion_codigos
+    SET usado_en = NOW()
+    WHERE jugador_id = v_jugador_id
+      AND usado_en IS NULL;
+
+    UPDATE jugadores
+    SET password_hash = p_password_hash
+    WHERE id = v_jugador_id;
+
+    COMMIT;
+
+    SELECT v_jugador_id AS jugador_id, 'CLAVE_ACTUALIZADA' AS estado;
 END$$
 
 DELIMITER ;

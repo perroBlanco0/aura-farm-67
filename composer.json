@@ -1,9 +1,9 @@
 {
-    "name": "perroblanco0/aura-farm-67",
-    "description": "Duelos de cartas meme y apuestas de Aura con CodeIgniter 4",
+    "name": "perroblanco0/michi-arena",
+    "description": "Michi Arena: duelos de cartas de gatos virales y apuestas de Aura con CodeIgniter 4",
     "license": "MIT",
     "type": "project",
-    "homepage": "https://github.com/perroBlanco0/aura-farm-67",
+    "homepage": "https://github.com/perroBlanco0/aura-duelos-meme",
     "require": {
         "php": "^8.2",
         "codeigniter4/framework": "^4.7.4"
@@ -34,5 +34,11 @@
     },
     "scripts": {
         "test": "phpunit"
-    }
+    },
+    "authors": [
+        {
+            "name": "perroBlanco0",
+            "homepage": "https://github.com/perroBlanco0"
+        }
+    ]
 }

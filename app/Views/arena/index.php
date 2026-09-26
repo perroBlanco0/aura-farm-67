@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Aura Arena 67</title>
+    <title>Michi Arena</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -41,7 +41,14 @@
             mask-image: linear-gradient(to bottom, #000, transparent 80%);
         }
         .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 36px 0 60px; position: relative; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 52px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 52px; }
+        .topnav { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .topnav a {
+            padding: 9px 14px; border-radius: 999px; font-size: .76rem; font-weight: 800;
+            color: #fff; text-decoration: none; background: rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.1);
+        }
+        .topnav a:hover { border-color: var(--cyan); }
         .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: .08em; }
         .brand-mark {
             width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px;
@@ -61,8 +68,8 @@
         }
         .copy { padding: clamp(28px, 5vw, 58px); overflow: hidden; position: relative; }
         .copy::after {
-            content: "67"; position: absolute; right: -18px; bottom: -56px;
-            font: 200px/1 "Archivo Black", sans-serif; color: rgba(184,255,54,.055); transform: rotate(-8deg);
+            content: "🐈"; position: absolute; right: -6px; bottom: -40px;
+            font-size: 170px; line-height: 1; opacity: .07; transform: rotate(-8deg);
         }
         .eyebrow { color: var(--cyan); font-size: .78rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
         h1 { margin: 14px 0 18px; max-width: 680px; font: clamp(2.55rem, 6vw, 5.35rem)/.92 "Archivo Black", sans-serif; letter-spacing: -.045em; }
@@ -113,22 +120,28 @@
 <main class="shell">
     <header class="topbar">
         <div class="brand">
-            <span class="brand-mark">67</span>
-            <span>AURA ARENA</span>
+            <span class="brand-mark">M</span>
+            <span>MICHI ARENA</span>
         </div>
-        <div class="balance"><?= esc(formatear_auracoins((int) $jugador['auracoins'])) ?></div>
+        <div class="topnav">
+            <?php if (! empty($es_admin)): ?>
+                <a href="<?= site_url('mantenedor') ?>">Mantenedor</a>
+            <?php endif ?>
+            <a href="<?= site_url('salir') ?>">Salir</a>
+            <div class="balance"><?= esc(formatear_auracoins((int) $jugador['auracoins'])) ?></div>
+        </div>
     </header>
 
     <section class="hero">
         <article class="copy">
-            <div class="eyebrow">Meme card battleground</div>
-            <h1>APUESTA.<br>TIRA CARTA.<br><span>FARMEA AURA.</span></h1>
+            <div class="eyebrow">La arena de los gatos virales</div>
+            <h1>APUESTA.<br>TIRA MICHI.<br><span>FARMEA AURA.</span></h1>
             <p class="lead">
-                Entra a una arena donde GigaChad, Capybara Chill y el Rizzler convierten
-                el cringe en daño crítico. Gana el pozo o pierde aura permanente.
+                Entra a la arena donde Oiia Oiia Cat, Big Floppa y el Michi Llorón
+                convierten el cringe en daño crítico. Gana el pozo o anda a llorar al TikTok.
             </p>
             <div class="tags">
-                <span class="tag">AURA INFINITO ×1.5</span>
+                <span class="tag">OIAA POWER ×1.5</span>
                 <span class="tag">RAREZA 67</span>
                 <span class="tag">ESCUDO CHILL</span>
                 <span class="tag">ROBO DE AURA</span>
@@ -137,7 +150,7 @@
 
         <aside class="challenge">
             <div class="profile">
-                <img class="avatar" src="https://api.dicebear.com/9.x/adventurer/svg?seed=<?= rawurlencode($jugador['username']) ?>&backgroundColor=b8ff36" alt="">
+                <img class="avatar" src="/img/cartas/michi.jpg" alt="" style="object-fit: cover;">
                 <div>
                     <small>Retador conectado</small>
                     <h2><?= esc($jugador['username']) ?></h2>
@@ -166,7 +179,7 @@
                     <?php endforeach ?>
                 </select>
                 <p class="hint">La apuesta se retiene al iniciar. Si ganas, cobras el pozo doble; si pierdes, recibes −100 de Aura permanente.</p>
-                <button type="submit">DESAFIAR A THE RIZZLER BOT</button>
+                <button type="submit">DESAFIAR AL MICHI ABURRIDO BOT</button>
             </form>
             <p class="rules">Economía y combate procesados de forma transaccional en MySQL.</p>
         </aside>

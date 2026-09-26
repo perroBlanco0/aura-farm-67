@@ -67,3 +67,18 @@ database.default.port = 3306
 #--------------------------------------------------------------------
 
 # logger.threshold = 4
+
+#--------------------------------------------------------------------
+# EMAIL (SMTP)
+#--------------------------------------------------------------------
+# Correo saliente por SMTP. En desarrollo/demo apunta a Mailpit
+# (localhost:1025). Para producción define tus credenciales SMTP/SES
+# como variables de entorno o en .env — nunca en Constants.php ni en git.
+email.protocol = smtp
+email.SMTPHost = localhost
+email.SMTPPort = 1025
+email.SMTPUser =
+email.SMTPPass =
+email.SMTPCrypto =
+email.fromEmail = 'arena@michi-arena.cl'
+email.fromName = 'Michi Arena'

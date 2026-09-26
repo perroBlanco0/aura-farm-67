@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Duelo #<?= esc($duelo['id']) ?> · Aura Arena</title>
+    <title>Duelo #<?= esc($duelo['id']) ?> · Michi Arena</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -142,9 +142,9 @@
 <main class="arena">
     <section class="opponent">
         <div class="opponent-inner">
-            <img class="avatar" src="https://api.dicebear.com/9.x/bottts-neutral/svg?seed=TheRizzlerBot&backgroundColor=ff4fc8" alt="">
+            <img class="avatar" src="/img/cartas/bot.gif" alt="" style="object-fit: cover;">
             <div class="identity">
-                <small>RIVAL MEME</small>
+                <small>RIVAL MICHI</small>
                 <h1><?= esc($duelo['bot_nombre']) ?></h1>
             </div>
             <div class="aura-panel">
@@ -169,7 +169,7 @@
                 <div class="feed-title">FEED DEL COMBATE</div>
                 <div id="battle-log">
                     <div class="log-entry">Apuesta retenida: <strong><?= esc(formatear_auracoins((int) $duelo['auracoins_apuesta'])) ?></strong>.</div>
-                    <div class="log-entry">The Rizzler Bot entró a la arena. Elige una carta para comenzar.</div>
+                    <div class="log-entry"><?= esc($duelo['bot_nombre']) ?> entró a la arena. Elige una carta para comenzar.</div>
                 </div>
             </aside>
         </div>
