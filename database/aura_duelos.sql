@@ -207,6 +207,36 @@ CREATE TABLE IF NOT EXISTS recuperacion_codigos (
         ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- Michis salvajes del mapa: el servidor decide qué cartas están activas
+-- para cada jugador; el cliente solo las dibuja.
+CREATE TABLE IF NOT EXISTS michis_salvajes (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    jugador_id INT UNSIGNED NOT NULL,
+    carta_id INT UNSIGNED NOT NULL,
+    estado ENUM('ACTIVO', 'CAPTURADO', 'HUIDO') NOT NULL DEFAULT 'ACTIVO',
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_salvajes_jugador_estado (jugador_id, estado),
+    CONSTRAINT fk_salvajes_jugador
+        FOREIGN KEY (jugador_id) REFERENCES jugadores (id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_salvajes_carta
+        FOREIGN KEY (carta_id) REFERENCES cartas_meme (id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+SET @sql := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE michis_salvajes ADD COLUMN creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = 'aura_duelos'
+      AND TABLE_NAME = 'michis_salvajes'
+      AND COLUMN_NAME = 'creado_en'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- Jugadores de semilla. demo/nirvana es admin del mantenedor.
 -- Los correos apuntan al namespace Testmail para verificar la entrega.
 -- Los hash bcrypt corresponden a 'nirvana' y 'michi123'.
@@ -312,6 +342,8 @@ DROP PROCEDURE IF EXISTS sp_eliminar_jugador_logico;
 DROP PROCEDURE IF EXISTS sp_generar_codigo_recuperacion;
 DROP PROCEDURE IF EXISTS sp_canjear_codigo_recuperacion;
 DROP PROCEDURE IF EXISTS sp_registrar_jugador;
+DROP PROCEDURE IF EXISTS sp_spawn_michis;
+DROP PROCEDURE IF EXISTS sp_resolver_captura;
 
 DELIMITER $$
 
@@ -1235,6 +1267,159 @@ BEGIN
         1000 AS aura_actual,
         1000 AS aura_max,
         1500 AS auracoins;
+END$$
+
+CREATE PROCEDURE sp_spawn_michis(
+    IN p_jugador_id INT
+)
+BEGIN
+    DECLARE v_jugador_existe INT DEFAULT 0;
+    DECLARE v_activos INT DEFAULT 0;
+    DECLARE v_faltan INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    SELECT COUNT(*)
+    INTO v_jugador_existe
+    FROM jugadores
+    WHERE id = p_jugador_id
+      AND eliminado_en IS NULL;
+
+    IF v_jugador_existe = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Jugador no encontrado';
+    END IF;
+
+    -- Los spawns resueltos ya no se muestran: se purgan para no inflar la tabla.
+    DELETE FROM michis_salvajes
+    WHERE jugador_id = p_jugador_id
+      AND estado IN ('CAPTURADO', 'HUIDO');
+
+    SELECT COUNT(*)
+    INTO v_activos
+    FROM michis_salvajes
+    WHERE jugador_id = p_jugador_id
+      AND estado = 'ACTIVO'
+    FOR UPDATE;
+
+    SET v_faltan = GREATEST(0, 14 - v_activos);
+
+    -- Cada spawn nuevo saca una carta no-jefe al azar; el server es la verdad.
+    WHILE v_faltan > 0 DO
+        INSERT INTO michis_salvajes (jugador_id, carta_id)
+        SELECT p_jugador_id, id
+        FROM cartas_meme
+        WHERE id NOT IN (7, 8, 9)
+        ORDER BY RAND()
+        LIMIT 1;
+
+        SET v_faltan = v_faltan - 1;
+    END WHILE;
+
+    COMMIT;
+
+    SELECT
+        m.id AS spawn_id,
+        c.id AS carta_id,
+        c.nombre,
+        c.imagen_url,
+        c.rareza_nivel,
+        c.ataque_aura,
+        c.defensa_cringe
+    FROM michis_salvajes AS m
+    INNER JOIN cartas_meme AS c ON c.id = m.carta_id
+    WHERE m.jugador_id = p_jugador_id
+      AND m.estado = 'ACTIVO'
+    ORDER BY m.id;
+END$$
+
+CREATE PROCEDURE sp_resolver_captura(
+    IN p_spawn_id INT,
+    IN p_jugador_id INT,
+    IN p_toques INT,
+    IN p_duracion_ms INT,
+    IN p_exito TINYINT
+)
+BEGIN
+    DECLARE v_spawn_jugador INT UNSIGNED;
+    DECLARE v_spawn_estado VARCHAR(20);
+    DECLARE v_carta_id INT UNSIGNED;
+    DECLARE v_rareza INT UNSIGNED DEFAULT 1;
+    DECLARE v_carta_nombre VARCHAR(100) DEFAULT '';
+    DECLARE v_min_toques INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    SELECT jugador_id, estado, carta_id
+    INTO v_spawn_jugador, v_spawn_estado, v_carta_id
+    FROM michis_salvajes
+    WHERE id = p_spawn_id
+    FOR UPDATE;
+
+    IF v_spawn_jugador IS NULL
+        OR v_spawn_jugador <> p_jugador_id
+        OR v_spawn_estado <> 'ACTIVO' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Spawn inválido';
+    END IF;
+
+    IF p_duracion_ms IS NULL OR p_duracion_ms < 500 OR p_duracion_ms > 6600 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Duración de captura inválida';
+    END IF;
+
+    IF p_toques IS NULL OR p_toques < 0 OR p_toques > 126 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Cantidad de toques inválida';
+    END IF;
+
+    SELECT nombre, rareza_nivel
+    INTO v_carta_nombre, v_rareza
+    FROM cartas_meme
+    WHERE id = v_carta_id;
+
+    -- Confianza exigida (50 + rareza * 1.5) en toques de +8, sin el decay del
+    -- cliente: es el piso de taps que el intento debió tener para creerse.
+    SET v_min_toques = CEIL((50 + v_rareza * 1.5) / 8);
+
+    IF p_exito = 1 AND p_toques < v_min_toques THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Confianza insuficiente para atrapar';
+    END IF;
+
+    IF p_exito = 1 THEN
+        INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
+        VALUES (p_jugador_id, v_carta_id);
+
+        UPDATE michis_salvajes
+        SET estado = 'CAPTURADO'
+        WHERE id = p_spawn_id;
+    ELSE
+        UPDATE michis_salvajes
+        SET estado = 'HUIDO'
+        WHERE id = p_spawn_id;
+    END IF;
+
+    COMMIT;
+
+    SELECT
+        IF(p_exito = 1, 1, 0) AS capturado,
+        v_carta_nombre AS carta_nombre,
+        IF(p_exito = 1,
+            CONCAT('¡ATRAPASTE A ', v_carta_nombre, '! Ya está en tu mazo.'),
+            'El michi huyó') AS mensaje;
 END$$
 
 DELIMITER ;
