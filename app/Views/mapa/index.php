@@ -65,6 +65,7 @@
         .hud-nav { display: flex; gap: 8px; align-items: center; }
         .hud-nav a {
             padding: 8px 13px; border-radius: 999px; font-size: .72rem; font-weight: 800;
+            min-height: 44px; display: inline-flex; align-items: center;
             color: #fff; text-decoration: none; background: rgba(255,255,255,.07);
             border: 1px solid rgba(255,255,255,.1); white-space: nowrap;
         }
@@ -348,7 +349,7 @@
         @media (max-width: 560px) {
             .hud { padding: 8px 10px; gap: 8px; }
             .brand span:last-child { display: none; }
-            .hud-nav a { padding: 7px 10px; font-size: .66rem; }
+            .hud-nav a { padding: 11px 12px; font-size: .66rem; min-height: 44px; display: inline-flex; align-items: center; }
             .balance { font-size: .66rem; padding: 7px 10px; }
             .btn-rescan { right: 14px; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); padding: 13px 18px; font-size: .78rem; }
             .chip-ubicacion { display: none; }

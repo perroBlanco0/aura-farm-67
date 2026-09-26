@@ -44,7 +44,7 @@
 
     <div class="card form-card">
         <h2>ÚNETE A LA ARENA</h2>
-        <p class="sub">Empiezas con 1000 de Aura, 1500 AuraCoins y 8 michis.</p>
+        <p class="sub">Empiezas con 1000 de Aura, 1500 $MICHI y 6 michis base — el resto se atrapa en el mapa.</p>
 
         <?php if (! empty($error)): ?><p class="error"><?= esc($error) ?></p><?php endif ?>
 

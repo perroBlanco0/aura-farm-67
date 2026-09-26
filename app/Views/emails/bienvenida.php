@@ -18,7 +18,7 @@
                         <h1 style="margin:0 0 10px;color:#22304f;font-size:26px;line-height:1.15;">¡Bienvenido a la arena, <?= esc($username) ?>! 🐾</h1>
                         <p style="margin:0;color:#7381a3;font-size:14px;line-height:1.65;">
                             Tu cuenta ya está lista: <strong style="color:#22304f;">1000 de Aura</strong>,
-                            <strong style="color:#22304f;">1500 AuraCoins</strong> y un mazo completo de michis virales
+                            <strong style="color:#22304f;">1500 $MICHI</strong> y tus 6 michis base — el resto se atrapa en el mapa
                             te esperan en el mapa. Y si te sientes valiente… El Michi Supremo anda suelto.
                         </p>
                     </td>
