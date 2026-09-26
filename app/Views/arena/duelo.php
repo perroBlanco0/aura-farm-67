@@ -388,7 +388,7 @@
 <script>
 const duelId = <?= (int) $duelo['id'] ?>;
 const playUrl = <?= json_encode(site_url('arena/jugar'), JSON_UNESCAPED_SLASHES) ?>;
-const arenaUrl = <?= json_encode(site_url('arena'), JSON_UNESCAPED_SLASHES) ?>;
+const arenaUrl = <?= json_encode(site_url('mapa'), JSON_UNESCAPED_SLASHES) ?>;
 const csrfName = <?= json_encode(csrf_token()) ?>;
 const csrfHash = <?= json_encode(csrf_hash()) ?>;
 const playerMaxAura = <?= (int) $duelo['aura_max_retador'] ?>;
@@ -722,7 +722,7 @@ const showResult = (data) => {
         html: `<p style="margin:0 0 10px">${michiEscapeHtml(data.frase_resultado)}</p>`
             + `<strong style="font-family:Fredoka,sans-serif;font-size:1.1rem;color:${won ? '#4d7a00' : '#c23045'}">`
             + `${won ? 'Pozo cobrado' : 'Apuesta perdida'}: ${michiEscapeHtml(formatCoins(data.auracoins_movimiento))}</strong>`,
-        confirmButtonText: 'VOLVER A LA ARENA',
+        confirmButtonText: 'VOLVER AL MAPA',
         allowOutsideClick: false,
         allowEscapeKey: false,
     }).then(() => { window.location.href = arenaUrl; });
