@@ -29,7 +29,7 @@ class Auth extends BaseController
                 'es_admin' => (int) $jugador['es_admin'],
             ]);
 
-            return redirect()->to('/arena');
+            return redirect()->to('/mapa');
         }
 
         return view('auth/login', [
