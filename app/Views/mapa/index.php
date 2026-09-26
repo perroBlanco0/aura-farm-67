@@ -324,6 +324,27 @@
         .btn-desafiar:hover { filter: brightness(1.1); }
         .btn-huir { background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.16) !important; }
 
+        .intro-michi {
+            position: fixed; inset: 0; z-index: 3900;
+            display: none; place-items: center; text-align: center; padding: 24px;
+            background: radial-gradient(ellipse at 50% 42%, rgba(0,0,0,.35) 0%, rgba(5,6,10,.92) 75%),
+                linear-gradient(180deg, color-mix(in srgb, var(--acc) 22%, transparent), transparent 60%);
+        }
+        .intro-michi.activa { display: grid; animation: cineFade .3s ease; }
+        .intro-michi img {
+            width: min(190px, 52vw); height: min(190px, 52vw); object-fit: cover;
+            border-radius: 28px; border: 4px solid var(--acc);
+            box-shadow: 0 0 60px color-mix(in srgb, var(--acc) 55%, transparent), 0 24px 50px rgba(0,0,0,.65);
+            animation: caidaJefe .5s cubic-bezier(.15,1.6,.35,1) backwards;
+        }
+        .intro-michi h2 {
+            margin: 18px 0 4px; color: #fff;
+            font-family: "Archivo Black", sans-serif;
+            font-size: clamp(1.35rem, 6vw, 2rem); letter-spacing: .03em;
+            text-shadow: 0 0 26px var(--acc);
+        }
+        .intro-michi p { color: var(--acc); font-weight: 800; font-size: .82rem; letter-spacing: .12em; margin: 0; }
+
         @media (max-width: 560px) {
             .hud { padding: 8px 10px; gap: 8px; }
             .brand span:last-child { display: none; }
@@ -372,6 +393,14 @@
     <?= csrf_field() ?>
     <input type="hidden" name="apuesta" id="inputApuestaJefe" value="">
 </form>
+
+<div class="intro-michi" id="introMichi" role="dialog" aria-modal="true">
+    <div>
+        <img id="introImg" src="" alt="">
+        <h2 id="introNombre"></h2>
+        <p id="introFrase"></p>
+    </div>
+</div>
 
 <div class="cinematica" id="cinematica" role="dialog" aria-modal="true">
     <p class="cine-alerta" id="cineAlerta">⚠ UNA PRESENCIA SUPREMA SE ACERCA ⚠</p>
@@ -522,7 +551,7 @@
                     direction: 'top',
                     offset: [0, -26],
                 });
-            marker.on('click', () => pelear(carta));
+            marker.on('click', () => introMichi(carta));
             spawns.push(marker);
         }
 
@@ -542,6 +571,32 @@
             });
         markerJefe.on('click', abrirCinematica);
         spawns.push(markerJefe);
+    }
+
+    const FRASES_MICHI = {
+        'Oiia Oiia Cat':        ['OIIA OIIA OIIA… 🌀', '#44eaff'],
+        'Chipi Chipi Chapa':    ['CHIPI CHIPI CHAPA CHAPA', '#ffd452'],
+        'Big Floppa':           ['EL CARACAL LEGENDARIO APARECE', '#ff4fc8'],
+        'Smudge de la Mesa':    ['NO LE GUSTÓ TU ENSALADA', '#9ca4b7'],
+        'Michi Llorón':         ['ESTÁ LLORANDO… ¿DE MIEDO?', '#7aa8ff'],
+        'Beluga Atómico':       ['HECKER NIVEL ATÓMICO', '#b8ff36'],
+        'Michi Suplicante':     ['TE RUEGA QUE NO PELEEN', '#f0b8ff'],
+        'Michi Sospechoso':     ['MODO SOSPECHOSO ACTIVADO', '#ff7b54'],
+    };
+    const introOverlay = document.getElementById('introMichi');
+    let introTimer = null;
+
+    function introMichi(carta) {
+        const [frase, color] = FRASES_MICHI[carta.nombre] || ['UN MICHI SALVAJE APARECE', '#44eaff'];
+        introOverlay.style.setProperty('--acc', color);
+        document.getElementById('introImg').src = carta.imagen;
+        document.getElementById('introNombre').textContent = carta.nombre.toUpperCase();
+        document.getElementById('introFrase').textContent = frase;
+        introOverlay.classList.add('activa');
+        introTimer = setTimeout(() => {
+            introOverlay.classList.remove('activa');
+            pelear(carta);
+        }, 1500);
     }
 
     const cinematica = document.getElementById('cinematica');
