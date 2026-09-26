@@ -16,6 +16,7 @@ $routes->group('', ['filter' => 'auth'], static function (RouteCollection $route
     $routes->post('arena/iniciar', 'Arena::iniciar');
     $routes->get('arena/duelo/(:num)', 'Arena::duelo/$1');
     $routes->post('arena/jugar', 'Arena::jugar');
+    $routes->get('mapa', 'Mapa::index');
     $routes->get('mantenedor', 'Mantenedor::index');
     $routes->match(['get', 'post'], 'mantenedor/editar/(:num)', 'Mantenedor::editar/$1');
     $routes->post('mantenedor/eliminar/(:num)', 'Mantenedor::eliminar/$1');
