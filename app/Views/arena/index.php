@@ -6,112 +6,80 @@
     <title>Michi Arena</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/michi.css">
     <style>
-        :root {
-            --bg: #08090d;
-            --panel: #12151d;
-            --panel-soft: #191d28;
-            --lime: #b8ff36;
-            --cyan: #44eaff;
-            --pink: #ff4fc8;
-            --gold: #ffd452;
-            --muted: #9ca4b7;
+        .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 30px 0 60px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 34px; }
+
+        .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 26px; align-items: stretch; }
+        .copy, .challenge { border-radius: 28px; box-shadow: var(--shadow-lg); }
+        .copy {
+            padding: clamp(30px, 5vw, 56px); position: relative; overflow: hidden;
+            background: linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.05));
+            border: 2px solid rgba(255,255,255,.35);
+            color: #fff; backdrop-filter: blur(8px);
         }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            min-height: 100vh;
-            color: #fff;
-            font-family: Inter, sans-serif;
-            background:
-                radial-gradient(circle at 15% 15%, rgba(68, 234, 255, .12), transparent 30rem),
-                radial-gradient(circle at 85% 10%, rgba(255, 79, 200, .13), transparent 26rem),
-                var(--bg);
-        }
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            opacity: .18;
-            background-image: linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
-            background-size: 44px 44px;
-            mask-image: linear-gradient(to bottom, #000, transparent 80%);
-        }
-        .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 36px 0 60px; position: relative; }
-        .topbar { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 52px; }
-        .topnav { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .topnav a {
-            padding: 9px 14px; border-radius: 999px; font-size: .76rem; font-weight: 800;
-            color: #fff; text-decoration: none; background: rgba(255,255,255,.07);
-            border: 1px solid rgba(255,255,255,.1);
-        }
-        .topnav a:hover { border-color: var(--cyan); }
-        .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: .08em; }
-        .brand-mark {
-            width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px;
-            color: #08090d; background: var(--lime); box-shadow: 0 0 28px rgba(184,255,54,.35);
-            font-family: "Archivo Black", sans-serif;
-        }
-        .balance {
-            border: 1px solid rgba(255,255,255,.12); background: rgba(18,21,29,.75);
-            border-radius: 999px; padding: 11px 16px; color: var(--gold); font-weight: 800;
-        }
-        .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; align-items: stretch; }
-        .copy, .challenge {
-            border: 1px solid rgba(255,255,255,.1);
-            border-radius: 28px;
-            background: linear-gradient(145deg, rgba(25,29,40,.92), rgba(12,14,20,.96));
-            box-shadow: 0 28px 80px rgba(0,0,0,.36);
-        }
-        .copy { padding: clamp(28px, 5vw, 58px); overflow: hidden; position: relative; }
         .copy::after {
-            content: "🐈"; position: absolute; right: -6px; bottom: -40px;
-            font-size: 170px; line-height: 1; opacity: .07; transform: rotate(-8deg);
+            content: "🐈"; position: absolute; right: -10px; bottom: -42px;
+            font-size: 170px; line-height: 1; opacity: .16; transform: rotate(-8deg);
         }
-        .eyebrow { color: var(--cyan); font-size: .78rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
-        h1 { margin: 14px 0 18px; max-width: 680px; font: clamp(2.55rem, 6vw, 5.35rem)/.92 "Archivo Black", sans-serif; letter-spacing: -.045em; }
-        h1 span { color: var(--lime); text-shadow: 0 0 34px rgba(184,255,54,.2); }
-        .lead { max-width: 570px; color: #c4cada; font-size: clamp(1rem, 2vw, 1.16rem); line-height: 1.7; }
-        .tags { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 28px; }
-        .tag { padding: 8px 12px; border-radius: 9px; background: rgba(255,255,255,.055); color: #d7dbea; font-size: .78rem; font-weight: 700; }
-        .challenge { padding: 28px; display: flex; flex-direction: column; }
-        .profile { display: grid; grid-template-columns: 72px 1fr; gap: 16px; align-items: center; padding-bottom: 22px; border-bottom: 1px solid rgba(255,255,255,.08); }
-        .avatar { width: 72px; height: 72px; border-radius: 20px; background: #282e40; border: 2px solid var(--pink); }
-        .profile small { color: var(--muted); text-transform: uppercase; letter-spacing: .12em; font-weight: 700; }
-        .profile h2 { margin: 6px 0 3px; font-size: 1.3rem; }
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 22px 0 28px; }
-        .stat { padding: 14px 8px; border-radius: 14px; background: rgba(255,255,255,.045); text-align: center; }
-        .stat strong { display: block; font-size: 1.12rem; color: var(--lime); }
-        .stat span { color: var(--muted); font-size: .72rem; }
-        label { display: block; margin-bottom: 10px; font-weight: 800; }
-        select {
-            width: 100%; padding: 15px 16px; border: 1px solid rgba(255,255,255,.14);
-            border-radius: 14px; color: #fff; background: #0d1017; font: 700 1rem Inter, sans-serif;
+        .eyebrow {
+            display: inline-block; padding: 7px 14px; border-radius: 999px;
+            background: rgba(255,255,255,.85); color: var(--sky-1);
+            font-size: .72rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase;
         }
-        .hint { min-height: 38px; color: var(--muted); font-size: .78rem; line-height: 1.5; margin: 10px 0 18px; }
-        button {
-            width: 100%; border: 0; border-radius: 15px; padding: 16px 18px; cursor: pointer;
-            color: #090b0e; background: linear-gradient(100deg, var(--lime), #eaff78);
-            font: 800 1rem Inter, sans-serif; box-shadow: 0 10px 35px rgba(184,255,54,.18);
-            transition: transform .18s, box-shadow .18s;
+        h1 {
+            margin: 18px 0 16px; max-width: 640px;
+            font-size: clamp(2.4rem, 6vw, 4.6rem); line-height: .95; font-weight: 700; letter-spacing: -.02em;
+            text-shadow: 0 3px 0 rgba(30, 60, 120, .3);
         }
-        button:hover { transform: translateY(-2px); box-shadow: 0 14px 42px rgba(184,255,54,.27); }
-        .error { margin: 0 0 18px; padding: 12px 14px; border-radius: 12px; background: rgba(255,79,103,.13); border: 1px solid rgba(255,79,103,.3); color: #ff9bac; font-size: .85rem; }
-        .rules { margin-top: 26px; color: var(--muted); font-size: .75rem; text-align: center; line-height: 1.55; }
+        h1 span { color: var(--lime); }
+        .lead { max-width: 560px; color: #eaf6ff; font-size: clamp(1rem, 2vw, 1.12rem); font-weight: 700; line-height: 1.65; }
+        .tags { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; position: relative; z-index: 1; }
+        .tag {
+            padding: 8px 14px; border-radius: 999px;
+            background: rgba(255,255,255,.85); color: var(--ink);
+            font-size: .75rem; font-weight: 900;
+        }
+        .cta-mapa {
+            display: inline-flex; margin-top: 30px; padding: 17px 34px; position: relative; z-index: 1;
+            font-size: 1.1rem;
+        }
+
+        .challenge { background: var(--card); padding: 28px; display: flex; flex-direction: column; }
+        .profile {
+            display: grid; grid-template-columns: 76px 1fr; gap: 16px; align-items: center;
+            padding-bottom: 20px; border-bottom: 2px dashed var(--line);
+        }
+        .avatar {
+            width: 76px; height: 76px; border-radius: 50%; object-fit: cover;
+            border: 4px solid var(--sky-2); box-shadow: 0 8px 20px rgba(65, 180, 214, .35);
+        }
+        .profile small { color: var(--muted); text-transform: uppercase; letter-spacing: .12em; font-weight: 900; }
+        .profile h2 { margin: 5px 0 3px; font-size: 1.35rem; font-weight: 600; }
+        .profile .aura-line { color: var(--muted); font-weight: 800; font-size: .85rem; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0 24px; }
+        .stat {
+            padding: 13px 8px; border-radius: 16px; text-align: center;
+            background: #f2f7ff; border: 2px solid var(--line);
+        }
+        .stat strong { display: block; font-size: 1.15rem; color: var(--sky-1); font-family: Fredoka, sans-serif; }
+        .stat span { color: var(--muted); font-size: .68rem; font-weight: 900; letter-spacing: .06em; }
+        .hint { min-height: 38px; color: var(--muted); font-size: .8rem; font-weight: 700; line-height: 1.5; margin: 10px 0 18px; }
+        .challenge form button { width: 100%; }
+        .rules { margin-top: 22px; color: var(--muted); font-size: .74rem; font-weight: 700; text-align: center; line-height: 1.55; }
+
         @media (max-width: 820px) {
-            .shell { padding-top: 22px; }
-            .topbar { margin-bottom: 26px; }
+            .shell { padding-top: 20px; }
+            .topbar { margin-bottom: 22px; }
             .hero { grid-template-columns: 1fr; }
-            .copy { padding: 34px 26px 46px; }
+            .copy { padding: 30px 24px 44px; }
         }
         @media (max-width: 480px) {
-            .shell { width: min(100% - 20px, 1120px); }
+            .shell { width: calc(100% - 20px); }
             .brand span:last-child { display: none; }
             .balance { font-size: .78rem; }
-            .copy, .challenge { border-radius: 22px; }
             .challenge { padding: 20px; }
         }
     </style>
@@ -124,6 +92,8 @@
             <span>MICHI ARENA</span>
         </div>
         <div class="topnav">
+            <a href="<?= site_url('arena') ?>" class="activo">Arena</a>
+            <a href="<?= site_url('mapa') ?>">Mapa</a>
             <?php if (! empty($es_admin)): ?>
                 <a href="<?= site_url('mantenedor') ?>">Mantenedor</a>
             <?php endif ?>
@@ -146,15 +116,16 @@
                 <span class="tag">ESCUDO CHILL</span>
                 <span class="tag">ROBO DE AURA</span>
             </div>
+            <a class="btn cta-mapa" href="<?= site_url('mapa') ?>">🧭 BUSCAR MICHIS</a>
         </article>
 
         <aside class="challenge">
             <div class="profile">
-                <img class="avatar" src="/img/cartas/michi.jpg" alt="" style="object-fit: cover;">
+                <img class="avatar" src="/img/cartas/michi.jpg" alt="">
                 <div>
-                    <small>Retador conectado</small>
+                    <small>Entrenador michi</small>
                     <h2><?= esc($jugador['username']) ?></h2>
-                    <span><?= esc($jugador['aura_actual']) ?> / <?= esc($jugador['aura_max']) ?> Aura</span>
+                    <span class="aura-line"><?= esc($jugador['aura_actual']) ?> / <?= esc($jugador['aura_max']) ?> Aura</span>
                 </div>
             </div>
 
@@ -179,11 +150,19 @@
                     <?php endforeach ?>
                 </select>
                 <p class="hint">La apuesta se retiene al iniciar. Si ganas, cobras el pozo doble; si pierdes, recibes −100 de Aura permanente.</p>
-                <button type="submit">DESAFIAR AL MICHI ABURRIDO BOT</button>
+                <button type="submit">⚔️ DESAFIAR AL MICHI BOT</button>
             </form>
             <p class="rules">Economía y combate procesados de forma transaccional en MySQL.</p>
         </aside>
     </section>
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/js/michi.js"></script>
+<script>
+<?php if ($error !== null): ?>
+MichiToast.fire({ icon: 'error', title: <?= json_encode((string) $error, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
+<?php endif ?>
+</script>
 </body>
 </html>

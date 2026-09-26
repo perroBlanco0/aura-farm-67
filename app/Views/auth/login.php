@@ -6,86 +6,75 @@
     <title>Entrar · Michi Arena</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/michi.css">
     <style>
-        :root {
-            --bg: #08090d; --panel: #12151d; --lime: #b8ff36; --cyan: #44eaff;
-            --pink: #ff4fc8; --gold: #ffd452; --muted: #9ca4b7;
+        body { display: grid; place-items: center; padding: 24px 16px; }
+        .splash { width: min(430px, 100%); text-align: center; }
+        .mascot {
+            width: 118px; height: 118px; margin: 0 auto 14px;
+            border-radius: 50%; object-fit: cover;
+            border: 5px solid #fff;
+            box-shadow: var(--shadow-lg), 0 0 0 10px rgba(255, 255, 255, .22);
+            animation: bob 3.2s ease-in-out infinite;
         }
-        * { box-sizing: border-box; }
-        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
-        body {
-            margin: 0; min-height: 100vh; display: grid; place-items: center;
-            color: #fff; font-family: Inter, sans-serif; padding: 20px;
-            background:
-                radial-gradient(circle at 20% 12%, rgba(68,234,255,.12), transparent 26rem),
-                radial-gradient(circle at 82% 78%, rgba(255,79,200,.13), transparent 24rem),
-                var(--bg);
+        @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .logo {
+            margin: 0; color: #fff; letter-spacing: .02em;
+            font-size: clamp(2.4rem, 9vw, 3.4rem); line-height: .95; font-weight: 700;
+            text-shadow: 0 3px 0 rgba(30, 60, 120, .35), 0 10px 30px rgba(20, 50, 100, .45);
         }
-        .card {
-            width: min(430px, 100%); padding: clamp(26px, 6vw, 44px);
-            border: 1px solid rgba(255,255,255,.1); border-radius: 26px;
-            background: linear-gradient(150deg, rgba(25,29,40,.94), rgba(12,14,20,.97));
-            box-shadow: 0 30px 90px rgba(0,0,0,.45); position: relative; overflow: hidden;
-        }
-        .card::after {
-            content: "🐱"; position: absolute; right: -14px; bottom: -30px;
-            font-size: 130px; opacity: .06; transform: rotate(-12deg);
-        }
-        .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; letter-spacing: .08em; margin-bottom: 30px; }
-        .brand-mark {
-            width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px;
-            background: var(--lime); color: #08090d; font-family: "Archivo Black", sans-serif;
-            box-shadow: 0 0 26px rgba(184,255,54,.35);
-        }
-        h1 { margin: 0 0 6px; font: clamp(1.7rem, 6vw, 2.3rem)/1 "Archivo Black", sans-serif; letter-spacing: -.03em; }
-        h1 span { color: var(--lime); }
-        .sub { color: var(--muted); font-size: .85rem; margin-bottom: 26px; }
-        label { display: block; margin: 16px 0 8px; font-weight: 800; font-size: .82rem; letter-spacing: .05em; }
-        input {
-            width: 100%; padding: 14px 16px; border-radius: 13px; font: 600 1rem Inter, sans-serif;
-            border: 1px solid rgba(255,255,255,.14); background: #0d1017; color: #fff;
-        }
-        input:focus { outline: 2px solid var(--cyan); border-color: transparent; }
-        button {
-            margin-top: 24px; width: 100%; border: 0; border-radius: 14px; padding: 15px;
-            cursor: pointer; color: #090b0e; font: 800 1rem Inter, sans-serif;
-            background: linear-gradient(100deg, var(--lime), #eaff78);
-            box-shadow: 0 10px 35px rgba(184,255,54,.18); transition: transform .18s;
-        }
-        button:hover { transform: translateY(-2px); }
-        .error, .ok { padding: 12px 14px; border-radius: 12px; font-size: .84rem; margin-bottom: 6px; }
-        .error { background: rgba(255,79,103,.13); border: 1px solid rgba(255,79,103,.3); color: #ff9bac; }
-        .ok { background: rgba(184,255,54,.1); border: 1px solid rgba(184,255,54,.3); color: var(--lime); }
-        .links { margin-top: 22px; display: flex; justify-content: space-between; font-size: .8rem; position: relative; z-index: 1; }
-        a { color: var(--cyan); text-decoration: none; font-weight: 700; }
-        a:hover { text-decoration: underline; }
-        .demo-hint { margin-top: 18px; color: var(--muted); font-size: .72rem; text-align: center; }
-        .demo-hint code { color: var(--gold); }
+        .logo span { color: var(--lime); }
+        .tagline { margin: 10px 0 24px; color: #eaf6ff; font-weight: 800; font-size: .95rem; text-shadow: 0 2px 8px rgba(20, 50, 100, .4); }
+        .form-card { padding: clamp(24px, 6vw, 36px); text-align: left; }
+        .form-card h2 { margin: 0 0 4px; font-size: 1.4rem; font-weight: 600; color: var(--ink); }
+        .form-card .sub { color: var(--muted); font-size: .85rem; font-weight: 700; margin-bottom: 6px; }
+        .form-card button { margin-top: 24px; width: 100%; }
+        .links { margin-top: 20px; display: flex; justify-content: center; font-size: .85rem; }
+        .links a { color: var(--sky-1); text-decoration: none; font-weight: 900; }
+        .links a:hover { text-decoration: underline; }
+        .demo-hint { margin-top: 16px; color: var(--muted); font-size: .75rem; text-align: center; font-weight: 700; }
+        .demo-hint code { color: #b87400; background: #fff3cf; border-radius: 7px; padding: 2px 7px; }
     </style>
 </head>
 <body>
-<main class="card">
-    <div class="brand"><span class="brand-mark">M</span><span>MICHI ARENA</span></div>
-    <h1>ENTRA A LA <span>ARENA</span></h1>
-    <p class="sub">Duelos de gatos virales y apuestas de Aura.</p>
+<main class="splash">
+    <img class="mascot" src="/img/cartas/michi.jpg" alt="Michi, la mascota de la arena">
+    <h1 class="logo">MICHI <span>ARENA</span></h1>
+    <p class="tagline">Atrapa michis virales, apuesta Aura y gana el pozo.</p>
 
-    <?php if (! empty($error)): ?><p class="error"><?= esc($error) ?></p><?php endif ?>
-    <?php if (! empty($ok)): ?><p class="ok"><?= esc($ok) ?></p><?php endif ?>
+    <div class="card form-card">
+        <h2>ENTRA A LA ARENA</h2>
+        <p class="sub">Duelos de gatos virales y apuestas de Aura.</p>
 
-    <form action="<?= site_url('login') ?>" method="post">
-        <?= csrf_field() ?>
-        <label for="username">USUARIO</label>
-        <input id="username" name="username" required autocomplete="username" autofocus>
-        <label for="clave">CLAVE</label>
-        <input id="clave" name="clave" type="password" required autocomplete="current-password">
-        <button type="submit">ENTRAR A DUELAR</button>
-    </form>
+        <?php if (! empty($error)): ?><p class="error"><?= esc($error) ?></p><?php endif ?>
+        <?php if (! empty($ok)): ?><p class="ok"><?= esc($ok) ?></p><?php endif ?>
 
-    <div class="links">
-        <a href="<?= site_url('recuperar') ?>">Olvidé mi clave</a>
+        <form action="<?= site_url('login') ?>" method="post">
+            <?= csrf_field() ?>
+            <label for="username">USUARIO</label>
+            <input id="username" name="username" required autocomplete="username" autofocus>
+            <label for="clave">CLAVE</label>
+            <input id="clave" name="clave" type="password" required autocomplete="current-password">
+            <button type="submit">ENTRAR A DUELAR</button>
+        </form>
+
+        <div class="links">
+            <a href="<?= site_url('recuperar') ?>">Olvidé mi clave</a>
+        </div>
+        <p class="demo-hint">Demo: <code>demo</code> / <code>nirvana</code></p>
     </div>
-    <p class="demo-hint">Demo: <code>demo</code> / <code>nirvana</code></p>
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/js/michi.js"></script>
+<script>
+<?php if (! empty($error)): ?>
+MichiToast.fire({ icon: 'error', title: <?= json_encode((string) $error, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
+<?php endif ?>
+<?php if (! empty($ok)): ?>
+MichiToast.fire({ icon: 'success', title: <?= json_encode((string) $ok, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
+<?php endif ?>
+</script>
 </body>
 </html>
