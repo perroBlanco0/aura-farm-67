@@ -251,7 +251,8 @@ END$$
 
 CREATE PROCEDURE sp_jugar_carta_turno(
     IN p_duelo_id INT,
-    IN p_carta_id INT
+    IN p_carta_id INT,
+    IN p_turno_esperado INT
 )
 BEGIN
     DECLARE v_duelo_existe INT DEFAULT 0;
@@ -322,6 +323,11 @@ BEGIN
     IF v_estado <> 'BATALLANDO' THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Este duelo ya terminó';
+    END IF;
+
+    IF p_turno_esperado <> v_turno THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Este turno ya fue procesado';
     END IF;
 
     SELECT COUNT(*)

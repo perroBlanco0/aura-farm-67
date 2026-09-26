@@ -57,5 +57,7 @@ El seed incluye al jugador `AuraFarmer67` con 2.500 AuraCoins, al rival
 
 ### Contrato AJAX
 
-`POST /arena/jugar` recibe `duelo_id` y `carta_id`. Responde JSON con el daño realizado y
-recibido, Aura restante, efectos activados, saldo de AuraCoins, frase del turno y estado final.
+`POST /arena/jugar` recibe `duelo_id`, `carta_id` y `turno_esperado`. El procedimiento bloquea
+el duelo y rechaza solicitudes repetidas para un turno ya procesado. Responde JSON con el daño
+realizado y recibido, Aura restante, efectos activados, saldo de AuraCoins, frase del turno y
+estado final.

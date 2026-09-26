@@ -76,16 +76,17 @@ class Arena extends BaseController
 
         $dueloId = (int) $this->request->getPost('duelo_id');
         $cartaId = (int) $this->request->getPost('carta_id');
+        $turnoEsperado = (int) $this->request->getPost('turno_esperado');
 
-        if ($dueloId <= 0 || $cartaId <= 0) {
+        if ($dueloId <= 0 || $cartaId <= 0 || $turnoEsperado <= 0) {
             return $this->response->setStatusCode(422)->setJSON([
                 'ok' => false,
-                'mensaje' => 'Duelo o carta inválidos.',
+                'mensaje' => 'Duelo, carta o turno inválidos.',
             ]);
         }
 
         try {
-            $resultado = (new ArenaModel())->lanzarCarta($dueloId, $cartaId);
+            $resultado = (new ArenaModel())->lanzarCarta($dueloId, $cartaId, $turnoEsperado);
         } catch (Throwable $error) {
             return $this->response->setStatusCode(422)->setJSON([
                 'ok' => false,

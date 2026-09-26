@@ -20,10 +20,12 @@
             --muted: #9ca4b7;
         }
         * { box-sizing: border-box; }
+        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
         body { margin: 0; min-height: 100vh; color: #fff; font-family: Inter, sans-serif; background: var(--bg); }
         button { font: inherit; }
         .arena {
-            min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto;
+            width: 100%; min-width: 0; max-width: 100%; min-height: 100vh; overflow-x: hidden;
+            display: grid; grid-template-rows: auto 1fr auto;
             background:
                 radial-gradient(circle at 50% 6%, rgba(255,79,200,.15), transparent 28rem),
                 radial-gradient(circle at 50% 68%, rgba(68,234,255,.08), transparent 34rem),
@@ -31,8 +33,9 @@
                 linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
             background-size: auto, auto, 52px 52px, 52px 52px;
         }
+        .opponent, .board, .hand { width: 100%; min-width: 0; max-width: 100%; }
         .opponent { padding: 22px clamp(16px, 4vw, 54px); border-bottom: 1px solid rgba(255,255,255,.08); background: rgba(9,10,15,.72); backdrop-filter: blur(18px); }
-        .opponent-inner, .board-inner, .hand-inner { width: min(1280px, 100%); margin: 0 auto; }
+        .opponent-inner, .board-inner, .hand-inner { width: min(1280px, 100%); min-width: 0; margin: 0 auto; }
         .opponent-inner { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; }
         .avatar {
             width: 70px; height: 70px; border-radius: 18px; background: #242a38;
@@ -69,13 +72,15 @@
         .log-entry { padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.055); color: #c8cede; font-size: .78rem; line-height: 1.55; }
         .log-entry strong { color: var(--lime); }
         .log-entry.error { color: #ff91a3; }
-        .hand { padding: 22px clamp(16px, 4vw, 54px) 30px; border-top: 1px solid rgba(255,255,255,.08); background: #0c0e14; }
-        .hand-head { display: grid; grid-template-columns: 1fr minmax(260px, 420px) auto; align-items: end; gap: 22px; margin-bottom: 18px; }
+        .hand { overflow: hidden; padding: 22px clamp(16px, 4vw, 54px) 30px; border-top: 1px solid rgba(255,255,255,.08); background: #0c0e14; }
+        .hand-inner { overflow: hidden; }
+        .hand-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 420px) auto; align-items: end; gap: 22px; margin-bottom: 18px; }
+        .hand-head > * { min-width: 0; }
         .hand-title small { display: block; color: var(--cyan); letter-spacing: .14em; font-weight: 800; }
         .hand-title h2 { margin: 5px 0 0; font: 1.35rem "Archivo Black", sans-serif; }
         .player-aura .aura-label { margin-bottom: 7px; }
         .wallet { color: var(--gold); font-weight: 800; white-space: nowrap; }
-        .cards { display: grid; grid-template-columns: repeat(6, minmax(158px, 1fr)); gap: 13px; }
+        .cards { display: grid; width: 100%; grid-template-columns: repeat(6, minmax(158px, 1fr)); gap: 13px; min-width: 0; max-width: 100%; }
         .card {
             position: relative; min-height: 255px; display: flex; flex-direction: column; overflow: hidden;
             border: 1px solid rgba(255,255,255,.13); border-radius: 18px; background: linear-gradient(155deg, #202532, #11141c);
@@ -110,8 +115,8 @@
         .result-card p { color: #c8cede; line-height: 1.6; }
         .result-card a { display: block; margin-top: 20px; padding: 14px; border-radius: 12px; color: #080a0d; background: var(--lime); font-weight: 800; text-decoration: none; }
         @media (max-width: 980px) {
-            .cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 6px 2px 14px; }
-            .card { min-width: 180px; scroll-snap-align: start; }
+            .cards { display: flex; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; padding: 6px 2px 14px; }
+            .card { flex: 0 0 180px; min-width: 0; scroll-snap-align: start; }
         }
         @media (max-width: 760px) {
             .opponent { padding-top: 15px; padding-bottom: 15px; }
@@ -125,6 +130,11 @@
             .hand-head { grid-template-columns: 1fr auto; gap: 12px; }
             .player-aura { grid-column: 1 / -1; grid-row: 2; }
             .hand { padding-top: 17px; }
+        }
+        @media (max-width: 480px) {
+            .hand-head { grid-template-columns: minmax(0, 1fr); align-items: stretch; }
+            .player-aura { grid-column: 1; grid-row: auto; }
+            .wallet { white-space: normal; }
         }
     </style>
 </head>
@@ -186,7 +196,7 @@
                 <?php foreach ($mazo as $carta): ?>
                     <article class="card">
                         <span class="rarity <?= esc(badge_rareza((int) $carta['rareza_nivel'])) ?>">LVL <?= esc($carta['rareza_nivel']) ?></span>
-                        <img class="card-image" src="<?= esc($carta['imagen_url']) ?>" alt="">
+                        <img class="card-image" src="<?= esc($carta['imagen_url']) ?>" alt="" draggable="false">
                         <div class="card-body">
                             <h3><?= esc($carta['nombre']) ?></h3>
                             <div class="stats">
@@ -225,6 +235,9 @@ const opponentMaxAura = <?= (int) $duelo['aura_max_bot'] ?>;
 const buttons = [...document.querySelectorAll('.play-card')];
 const battleLog = document.getElementById('battle-log');
 const stage = document.getElementById('stage');
+let requestInFlight = false;
+let currentTurn = <?= (int) $duelo['turno'] ?>;
+let lastPlayStartedAt = 0;
 
 const formatCoins = (amount) => {
     const sign = amount < 0 ? '-' : amount > 0 ? '+' : '';
@@ -264,12 +277,21 @@ const showResult = (data) => {
 
 buttons.forEach((button) => {
     button.addEventListener('click', async () => {
+        const now = performance.now();
+
+        if (requestInFlight || now - lastPlayStartedAt < 500) {
+            return;
+        }
+
+        requestInFlight = true;
+        lastPlayStartedAt = now;
         setBusy(true);
 
         try {
             const body = new URLSearchParams({
                 duelo_id: duelId,
                 carta_id: button.dataset.cardId,
+                turno_esperado: currentTurn,
             });
             body.set(csrfName, csrfHash);
             const response = await fetch(playUrl, {
@@ -285,7 +307,8 @@ buttons.forEach((button) => {
 
             updateAura('player', data.aura_retador, playerMaxAura);
             updateAura('opponent', data.aura_oponente, opponentMaxAura);
-            document.getElementById('turn-number').textContent = Number(data.turno) + 1;
+            currentTurn = Number(data.turno) + 1;
+            document.getElementById('turn-number').textContent = currentTurn;
             document.getElementById('wallet').textContent = formatCoins(data.auracoins_saldo).replace('+', '');
             addLog(`<strong>${data.carta_jugada}</strong>: ${data.dano_realizado} de daño. ${data.frase}`);
 
@@ -298,9 +321,11 @@ buttons.forEach((button) => {
                 return;
             }
 
+            requestInFlight = false;
             setBusy(false);
         } catch (error) {
             addLog(error.message, true);
+            requestInFlight = false;
             setBusy(false);
         }
     });

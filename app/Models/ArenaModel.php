@@ -21,11 +21,11 @@ class ArenaModel extends Model
         return $resultado;
     }
 
-    public function lanzarCarta(int $dueloId, int $cartaId): array
+    public function lanzarCarta(int $dueloId, int $cartaId, int $turnoEsperado): array
     {
         $query = $this->db->query(
-            'CALL sp_jugar_carta_turno(?, ?)',
-            [$dueloId, $cartaId]
+            'CALL sp_jugar_carta_turno(?, ?, ?)',
+            [$dueloId, $cartaId, $turnoEsperado]
         );
         $fila = $query->getRowArray() ?? [];
         $query->freeResult();
