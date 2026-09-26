@@ -190,7 +190,7 @@ INSERT INTO cartas_meme (
     efecto_especial,
     imagen_url
 ) VALUES
-    (1, 'Oiia Oiia Cat', 310, 180, 67, 'CRITICO_MEME', '/img/cartas/oiia.jpg'),
+    (1, 'Oiia Oiia Cat', 310, 180, 67, 'CRITICO_MEME', '/img/cartas/oiia.png'),
     (2, 'Chipi Chipi Chapa', 190, 240, 42, 'ROBAR_AURA', '/img/cartas/chipi.gif'),
     (3, 'Big Floppa', 285, 150, 67, 'ROBAR_AURA', '/img/cartas/floppa.jpg'),
     (4, 'Smudge de la Mesa', 165, 300, 34, 'ESCUDO_CHILL', '/img/cartas/smudge.jpg'),
