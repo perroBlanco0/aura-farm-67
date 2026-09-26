@@ -262,7 +262,19 @@ INSERT INTO cartas_meme (
     (8, 'Patada Giratoria 360', 666, 450, 67, 'ROBAR_AURA', '/img/cartas/boss.png'),
     (9, 'Mirada del Juicio Final', 700, 600, 67, 'ESCUDO_CHILL', '/img/cartas/boss.png'),
     (10, 'Michi Suplicante', 205, 260, 50, 'ESCUDO_CHILL', '/img/cartas/suplicante.png'),
-    (11, 'Michi Sospechoso', 275, 140, 55, 'CRITICO_MEME', '/img/cartas/sospechoso.png')
+    (11, 'Michi Sospechoso', 275, 140, 55, 'CRITICO_MEME', '/img/cartas/sospechoso.png'),
+    -- Michis salvajes: solo se consiguen por captura en el mapa
+    (12, 'Michi Ojones', 170, 250, 28, 'ESCUDO_CHILL', '/img/cartas/amarillo.png'),
+    (13, 'Michi Tímido', 150, 240, 24, 'ESCUDO_CHILL', '/img/cartas/tabby.png'),
+    (14, 'Dúo del Pasto', 260, 200, 48, 'CRITICO_MEME', '/img/cartas/duo_pasto.png'),
+    (15, 'Michi Carcajada', 230, 190, 38, 'NINGUNO', '/img/cartas/risas.png'),
+    (16, 'Michi Asomao', 130, 180, 22, 'NINGUNO', '/img/cartas/minicat.png'),
+    (17, 'Perrito Infiltrado', 210, 190, 33, 'ROBAR_AURA', '/img/cartas/perrito.png'),
+    (18, 'Gemelas Fantasma', 300, 160, 58, 'CRITICO_MEME', '/img/cartas/gemelas.png'),
+    (19, 'El Grumpy', 320, 170, 62, 'CRITICO_MEME', '/img/cartas/grumpy.png'),
+    (20, 'Mono del Coro', 200, 220, 35, 'NINGUNO', '/img/cartas/mono.png'),
+    (21, 'Michi Parado', 180, 210, 30, 'ESCUDO_CHILL', '/img/cartas/blanca.png'),
+    (22, 'Perro Detectivesco', 240, 200, 44, 'ROBAR_AURA', '/img/cartas/cafe.png')
 ON DUPLICATE KEY UPDATE
     nombre = VALUES(nombre),
     ataque_aura = VALUES(ataque_aura),
