@@ -70,6 +70,149 @@
         .stage.hit { animation: impact .42s ease; }
         @keyframes impact { 35% { transform: scale(.985); filter: saturate(1.6); } 60% { box-shadow: inset 0 0 100px rgba(255, 90, 102, .25); } }
 
+        /* ── zona de combate animada ── */
+        .stage.fighting { min-height: 320px; }
+        .combat {
+            display: none;
+            position: relative; z-index: 2;
+            width: 100%;
+            padding: clamp(36px, 6vw, 50px) clamp(8px, 3vw, 30px) clamp(16px, 3vw, 24px);
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+            align-items: center; gap: clamp(6px, 3vw, 30px);
+        }
+        .stage.fighting .combat { display: grid; }
+        .stage.fighting .versus {
+            position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 6;
+        }
+        .stage.fighting .versus strong { display: none; }
+        .stage.fighting .versus span { margin-top: 0; }
+        .fighter { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
+        .fighter-card {
+            position: relative;
+            width: clamp(92px, 24vw, 150px); aspect-ratio: 3 / 4;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 16px; background: #fff; padding: 7px;
+            border: 3px solid #fff; box-shadow: var(--shadow-lg);
+            will-change: transform;
+        }
+        .fighter-card img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+        .fighter-name {
+            max-width: 100%; padding: 5px 12px; border-radius: 999px;
+            background: rgba(255, 255, 255, .92); color: var(--ink);
+            font-size: .62rem; font-weight: 900; letter-spacing: .05em; text-transform: uppercase;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: var(--shadow-sm);
+        }
+        .combat-vs {
+            font: 700 clamp(1.5rem, 5vw, 2.6rem)/1 Fredoka, sans-serif;
+            color: rgba(255, 255, 255, .9); text-shadow: 0 3px 0 rgba(30, 60, 120, .25);
+        }
+        .fighter.enter-left .fighter-card { animation: enterLeft .42s cubic-bezier(.2, .9, .3, 1.25); }
+        .fighter.enter-right .fighter-card { animation: enterRight .42s cubic-bezier(.2, .9, .3, 1.25); }
+        @keyframes enterLeft {
+            0% { transform: translate(-70px, 60px) rotate(-18deg) scale(.3); opacity: 0; }
+            60% { transform: translate(4px, -10px) rotate(5deg) scale(1.06); opacity: 1; }
+            100% { transform: none; }
+        }
+        @keyframes enterRight {
+            0% { transform: translate(70px, -60px) rotate(18deg) scale(.3); opacity: 0; }
+            60% { transform: translate(-4px, -10px) rotate(-5deg) scale(1.06); opacity: 1; }
+            100% { transform: none; }
+        }
+        .flying-card {
+            position: fixed; z-index: 60; pointer-events: none;
+            object-fit: contain; background: #fff; padding: 5px;
+            border-radius: 14px; box-shadow: var(--shadow-lg);
+        }
+        .flash-overlay { position: absolute; inset: 0; z-index: 5; border-radius: inherit; pointer-events: none; opacity: 0; }
+        .flash-overlay.white { background: rgba(255, 255, 255, .45); animation: flashFade .3s ease-out; }
+        .flash-overlay.gold { background: radial-gradient(circle, rgba(255, 201, 60, .6), transparent 72%); animation: flashFade .55s ease-out; }
+        @keyframes flashFade { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
+        .arena.shake { animation: shakeSm .38s ease-in-out; }
+        .arena.shake-hard { animation: shakeLg .55s ease-in-out; }
+        @keyframes shakeSm {
+            20% { transform: translate(3px, -2px); } 40% { transform: translate(-3px, 2px); }
+            60% { transform: translate(2px, 1px); } 80% { transform: translate(-2px, -1px); }
+        }
+        @keyframes shakeLg {
+            15% { transform: translate(8px, -5px) rotate(.4deg); } 35% { transform: translate(-8px, 5px) rotate(-.4deg); }
+            55% { transform: translate(6px, 3px) rotate(.25deg); } 75% { transform: translate(-5px, -3px); }
+        }
+        .impact-burst {
+            position: absolute; z-index: 7; width: 90px; height: 90px; border-radius: 50%;
+            background: radial-gradient(circle, #fff 0%, rgba(255, 201, 60, .95) 35%, transparent 70%);
+            transform: translate(-50%, -50%) scale(0);
+            animation: burst .42s ease-out forwards; pointer-events: none;
+        }
+        @keyframes burst {
+            30% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.7); opacity: 0; }
+        }
+        .paw { position: absolute; z-index: 8; font-size: 17px; line-height: 1; pointer-events: none; }
+        .confetti { position: absolute; top: 0; z-index: 9; line-height: 1; pointer-events: none; }
+        .dmg-float {
+            position: absolute; z-index: 8; left: 50%; top: -12px;
+            transform: translateX(-50%);
+            font: 700 clamp(1.3rem, 5.5vw, 2.1rem)/1 Fredoka, sans-serif;
+            color: #fff; -webkit-text-stroke: 2px var(--red);
+            text-shadow: 0 3px 0 rgba(0, 0, 0, .18);
+            white-space: nowrap; pointer-events: none;
+            animation: dmgFloat .95s ease-out forwards;
+        }
+        .dmg-float.crit { -webkit-text-stroke-color: #d99400; font-size: clamp(1.5rem, 6.5vw, 2.4rem); }
+        .dmg-float.crit-label { top: 34%; -webkit-text-stroke-color: #d99400; font-size: clamp(1.1rem, 5vw, 1.8rem); letter-spacing: .06em; }
+        .dmg-float.heal { -webkit-text-stroke-color: var(--lime-deep); font-size: clamp(.95rem, 4vw, 1.4rem); }
+        @keyframes dmgFloat {
+            0% { transform: translate(-50%, 0) scale(.6); opacity: 0; }
+            18% { transform: translate(-50%, -18px) scale(1.1); opacity: 1; }
+            100% { transform: translate(-50%, -70px) scale(1); opacity: 0; }
+        }
+        .aura-orb {
+            position: absolute; z-index: 9; width: 16px; height: 16px; border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #fff, var(--sky-2) 45%, var(--sky-1));
+            box-shadow: 0 0 12px 3px rgba(65, 180, 214, .7);
+            pointer-events: none;
+        }
+        .shield-bubble {
+            position: absolute; z-index: 6; inset: -13px; border-radius: 26px;
+            background: radial-gradient(circle at 30% 28%, rgba(255, 255, 255, .65), rgba(65, 180, 214, .32) 55%, rgba(74, 144, 217, .55));
+            border: 2px solid rgba(255, 255, 255, .85);
+            box-shadow: 0 0 24px rgba(65, 180, 214, .6), inset 0 0 18px rgba(255, 255, 255, .5);
+            transform: scale(0); pointer-events: none;
+        }
+        .shield-bubble.up { transform: scale(1); transition: transform .25s cubic-bezier(.2, .9, .3, 1.4); }
+        .shield-bubble.pop { transform: scale(1.3); opacity: 0; transition: transform .22s ease-in, opacity .22s ease-in; }
+        .fighter.fainted .fighter-card { animation: faint .95s ease-in forwards; }
+        @keyframes faint {
+            55% { transform: translateY(16px) rotate(72deg); filter: grayscale(1); opacity: .8; }
+            100% { transform: translateY(70px) rotate(86deg); filter: grayscale(1); opacity: 0; }
+        }
+        .bar-fill.low {
+            background: linear-gradient(90deg, #ff7a85, var(--red)) !important;
+            animation: lowPulse .9s ease-in-out infinite;
+        }
+        @keyframes lowPulse { 50% { filter: brightness(1.4); } }
+        @keyframes dmgFade { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes burstFade {
+            20% { opacity: .8; transform: translate(-50%, -50%) scale(.8); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes faintFade { 100% { filter: grayscale(1); opacity: .25; } }
+        @media (prefers-reduced-motion: reduce) {
+            .stage::before,
+            .arena.shake, .arena.shake-hard,
+            .bar-fill.low,
+            .fighter.enter-left .fighter-card,
+            .fighter.enter-right .fighter-card { animation: none !important; }
+            .dmg-float { animation: dmgFade .55s ease-out forwards; }
+            .impact-burst { animation: burstFade .35s ease-out forwards; }
+            .fighter.fainted .fighter-card { animation: faintFade .6s ease-out forwards; }
+        }
+        @media (max-width: 760px) {
+            .stage.fighting { min-height: 250px; }
+            .fighter-card { width: clamp(84px, 27vw, 120px); }
+            .fighter-name { font-size: .55rem; padding: 4px 9px; }
+        }
+
         .feed { border-radius: 22px; background: rgba(255, 255, 255, .92); overflow: hidden; box-shadow: var(--shadow-sm); }
         .feed-title { padding: 13px 16px; border-bottom: 2px dashed var(--line); color: var(--sky-1); font-size: .72rem; font-weight: 900; letter-spacing: .14em; }
         #battle-log { height: 230px; overflow: auto; padding: 8px 16px 16px; scrollbar-width: thin; }
@@ -177,6 +320,18 @@
                     <strong>VS</strong>
                     <span>DUELO #<?= esc($duelo['id']) ?> · TURNO <b id="turn-number"><?= esc($duelo['turno']) ?></b></span>
                 </div>
+                <div class="combat" id="combat">
+                    <div class="fighter fighter-player" id="fighter-player">
+                        <div class="fighter-card"><img alt=""></div>
+                        <span class="fighter-name"></span>
+                    </div>
+                    <div class="combat-vs">VS</div>
+                    <div class="fighter fighter-bot" id="fighter-bot">
+                        <div class="fighter-card"><img alt=""></div>
+                        <span class="fighter-name"></span>
+                    </div>
+                </div>
+                <div class="flash-overlay" id="flash-overlay"></div>
             </div>
             <aside class="feed">
                 <div class="feed-title">FEED DEL COMBATE</div>
@@ -241,6 +396,15 @@ const opponentMaxAura = <?= (int) $duelo['aura_max_bot'] ?>;
 const buttons = [...document.querySelectorAll('.play-card')];
 const battleLog = document.getElementById('battle-log');
 const stage = document.getElementById('stage');
+const cardImages = <?= json_encode(array_column($mazo, 'imagen_url', 'nombre'), JSON_UNESCAPED_SLASHES) ?>;
+const botCardFallback = <?= json_encode(base_url('img/cartas/bot.gif')) ?>;
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const arenaEl = document.querySelector('.arena');
+const flashOverlay = document.getElementById('flash-overlay');
+const fighterEls = {
+    player: document.getElementById('fighter-player'),
+    bot: document.getElementById('fighter-bot'),
+};
 let requestInFlight = false;
 let currentTurn = <?= (int) $duelo['turno'] ?>;
 let lastPlayStartedAt = 0;
@@ -252,7 +416,287 @@ const formatCoins = (amount) => {
 
 const updateAura = (side, value, max) => {
     document.getElementById(`${side}-aura`).textContent = value;
-    document.getElementById(`${side}-bar`).style.width = `${Math.max(0, Math.min(100, value / max * 100))}%`;
+    const bar = document.getElementById(`${side}-bar`);
+    const pct = Math.max(0, Math.min(100, value / max * 100));
+    bar.style.width = `${pct}%`;
+    bar.classList.toggle('low', pct <= 30);
+};
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const fighterCard = (side) => fighterEls[side].querySelector('.fighter-card');
+
+const centerInStage = (el) => {
+    const stageRect = stage.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    return {
+        x: rect.left - stageRect.left + rect.width / 2,
+        y: rect.top - stageRect.top + rect.height / 2,
+    };
+};
+
+const floatText = (side, text, cls = '') => {
+    const el = document.createElement('div');
+    el.className = `dmg-float ${cls}`.trim();
+    el.textContent = text;
+    fighterEls[side].appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+};
+
+const spawnPaws = (x, y) => {
+    if (reducedMotion) {
+        return;
+    }
+    for (let i = 0; i < 5; i++) {
+        const paw = document.createElement('span');
+        paw.className = 'paw';
+        paw.textContent = Math.random() < 0.6 ? '🐾' : '⭐';
+        paw.style.left = `${x}px`;
+        paw.style.top = `${y}px`;
+        stage.appendChild(paw);
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 34 + Math.random() * 46;
+        paw.animate([
+            { transform: 'translate(-50%, -50%) scale(.5)', opacity: 1 },
+            { transform: `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist - 20}px)) rotate(${Math.random() * 140 - 70}deg) scale(1)`, opacity: 0 },
+        ], { duration: 640, easing: 'ease-out' }).finished.catch(() => {}).finally(() => paw.remove());
+    }
+};
+
+const spawnBurst = (side) => {
+    const center = centerInStage(fighterCard(side));
+    const burst = document.createElement('div');
+    burst.className = 'impact-burst';
+    burst.style.left = `${center.x}px`;
+    burst.style.top = `${center.y}px`;
+    stage.appendChild(burst);
+    burst.addEventListener('animationend', () => burst.remove());
+    spawnPaws(center.x, center.y);
+};
+
+const flash = (kind) => {
+    if (reducedMotion) {
+        return;
+    }
+    flashOverlay.classList.remove('white', 'gold');
+    void flashOverlay.offsetWidth;
+    flashOverlay.classList.add(kind);
+};
+
+const shakeArena = (strong) => {
+    if (reducedMotion) {
+        return;
+    }
+    arenaEl.classList.remove('shake', 'shake-hard');
+    void arenaEl.offsetWidth;
+    arenaEl.classList.add(strong ? 'shake-hard' : 'shake');
+};
+
+const setFighter = (side, name, imgUrl) => {
+    fighterEls[side].querySelector('img').src = imgUrl;
+    fighterEls[side].querySelector('.fighter-name').textContent = name;
+};
+
+const enterAnim = (side) => {
+    const fighter = fighterEls[side];
+    fighter.classList.remove('enter-left', 'enter-right');
+    void fighter.offsetWidth;
+    fighter.classList.add(side === 'player' ? 'enter-left' : 'enter-right');
+};
+
+const flyCard = (sourceImg) => {
+    const card = fighterCard('player');
+    const from = sourceImg.getBoundingClientRect();
+    const to = card.getBoundingClientRect();
+    const ghost = sourceImg.cloneNode();
+    ghost.className = 'flying-card';
+    Object.assign(ghost.style, {
+        left: `${from.left}px`, top: `${from.top}px`,
+        width: `${from.width}px`, height: `${from.height}px`,
+    });
+    document.body.appendChild(ghost);
+    card.style.opacity = '0';
+    return ghost.animate([
+        { left: `${from.left}px`, top: `${from.top}px`, width: `${from.width}px`, height: `${from.height}px`, transform: 'rotate(-12deg)', offset: 0 },
+        { left: `${to.left - 20}px`, top: `${to.top - 50}px`, width: `${to.width}px`, height: `${to.height}px`, transform: 'rotate(7deg)', offset: .62 },
+        { left: `${to.left}px`, top: `${to.top}px`, width: `${to.width}px`, height: `${to.height}px`, transform: 'rotate(0deg)', offset: 1 },
+    ], { duration: 400, easing: 'cubic-bezier(.3, .7, .4, 1)' }).finished
+        .catch(() => {})
+        .then(() => { ghost.remove(); card.style.opacity = ''; });
+};
+
+const lunge = (side) => {
+    const dir = side === 'player' ? 1 : -1;
+    if (reducedMotion) {
+        return fighterCard(side).animate(
+            [{ opacity: 1 }, { opacity: .45 }, { opacity: 1 }],
+            { duration: 260 }
+        ).finished.catch(() => {});
+    }
+    return fighterCard(side).animate([
+        { transform: 'translateX(0)' },
+        { transform: `translateX(${dir * 34}%) rotate(${dir * 4}deg) scale(1.07)`, offset: .38 },
+        { transform: 'translateX(0)' },
+    ], { duration: 420, easing: 'cubic-bezier(.3, .7, .3, 1)' }).finished.catch(() => {});
+};
+
+const knockback = (side) => {
+    const card = fighterCard(side);
+    if (reducedMotion) {
+        card.animate([{ filter: 'brightness(1.9)' }, { filter: 'none' }], { duration: 260 });
+        return;
+    }
+    const dir = side === 'player' ? -1 : 1;
+    card.animate([
+        { transform: 'translateX(0)' },
+        { transform: `translateX(${dir * 18}px) rotate(${dir * 6}deg)`, offset: .3 },
+        { transform: `translateX(${dir * -8}px) rotate(${dir * -2}deg)`, offset: .58 },
+        { transform: `translateX(${dir * 4}px)`, offset: .8 },
+        { transform: 'translateX(0)' },
+    ], { duration: 400, easing: 'ease-out' });
+};
+
+const stealOrbs = (fromSide, toSide) => {
+    const from = centerInStage(fighterCard(fromSide));
+    const to = centerInStage(fighterCard(toSide));
+    const flights = [];
+    for (let i = 0; i < 4; i++) {
+        const orb = document.createElement('div');
+        orb.className = 'aura-orb';
+        orb.style.left = `${from.x - 8}px`;
+        orb.style.top = `${from.y - 8}px`;
+        stage.appendChild(orb);
+        flights.push(orb.animate([
+            { transform: 'translate(0, 0) scale(.5)', opacity: 0 },
+            { transform: `translate(${(to.x - from.x) / 2}px, ${(to.y - from.y) / 2 - 46}px) scale(1.15)`, opacity: 1, offset: .5 },
+            { transform: `translate(${to.x - from.x}px, ${to.y - from.y}px) scale(.6)`, opacity: 0 },
+        ], { duration: reducedMotion ? 320 : 560, delay: i * 80, easing: 'ease-in-out' })
+            .finished.catch(() => {}).finally(() => orb.remove()));
+    }
+    return Promise.all(flights);
+};
+
+const shieldUp = (side) => {
+    const bubble = document.createElement('div');
+    bubble.className = 'shield-bubble';
+    fighterCard(side).appendChild(bubble);
+    requestAnimationFrame(() => bubble.classList.add('up'));
+    return bubble;
+};
+
+const shieldPop = (bubble) => {
+    bubble.classList.add('pop');
+    setTimeout(() => bubble.remove(), 280);
+};
+
+const confetti = () => {
+    const stageHeight = stage.clientHeight;
+    const glyphs = ['🐾', '⭐', '😺', '🎉', '✨', '💚'];
+    for (let i = 0; i < (reducedMotion ? 10 : 34); i++) {
+        const piece = document.createElement('span');
+        piece.className = 'confetti';
+        piece.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
+        piece.style.left = `${Math.random() * 96}%`;
+        piece.style.fontSize = `${14 + Math.random() * 14}px`;
+        stage.appendChild(piece);
+        piece.animate([
+            { transform: 'translateY(-30px) rotate(0deg)', opacity: 1 },
+            { transform: `translateY(${stageHeight + 40}px) rotate(${Math.random() * 720 - 360}deg)`, opacity: .9 },
+        ], { duration: 900 + Math.random() * 900, easing: 'ease-in', delay: Math.random() * 350 })
+            .finished.catch(() => {}).finally(() => piece.remove());
+    }
+};
+
+const faintFighter = (side) => {
+    fighterEls[side].classList.add('fainted');
+    return wait(reducedMotion ? 650 : 1000);
+};
+
+const attackSequence = async (attacker, defender, damage, effect) => {
+    const isCrit = effect === 'CRITICO_MEME';
+    const lungeDone = lunge(attacker);
+    await wait(reducedMotion ? 80 : 180);
+    knockback(defender);
+    spawnBurst(defender);
+    floatText(defender, `-${damage}`, isCrit ? 'crit' : '');
+    if (isCrit) {
+        floatText(defender, '¡CRÍTICO!', 'crit-label');
+        flash('gold');
+    } else {
+        flash('white');
+    }
+    shakeArena(isCrit);
+    await lungeDone;
+};
+
+const playTurn = async (data, button) => {
+    stage.classList.add('fighting');
+    buttons.forEach((b) => { b.textContent = '¡EN COMBATE!'; });
+
+    const sourceImg = button.closest('.mcard')?.querySelector('.mcard-image');
+    const playerImgUrl = cardImages[data.carta_jugada] || sourceImg?.src || botCardFallback;
+    const botImgUrl = cardImages[data.carta_bot] || botCardFallback;
+
+    setFighter('player', data.carta_jugada, playerImgUrl);
+    setFighter('bot', data.carta_bot, botImgUrl);
+
+    const entrance = sourceImg && !reducedMotion
+        ? flyCard(sourceImg)
+        : (enterAnim('player'), Promise.resolve());
+    enterAnim('bot');
+    await entrance;
+    await wait(reducedMotion ? 80 : 140);
+
+    const botHeal = data.efecto_bot === 'ROBAR_AURA'
+        ? Math.floor(Number(data.dano_recibido) * 0.25)
+        : 0;
+    const opponentAfterHit = Math.max(0, Number(data.aura_oponente) - botHeal);
+
+    await attackSequence('player', 'bot', data.dano_realizado, data.efecto_jugador);
+    updateAura('opponent', opponentAfterHit, opponentMaxAura);
+
+    if (data.efecto_jugador === 'ROBAR_AURA' && Number(data.aura_robada) > 0) {
+        await stealOrbs('bot', 'player');
+        const healed = Math.min(
+            playerMaxAura,
+            Number(document.getElementById('player-aura').textContent) + Number(data.aura_robada)
+        );
+        updateAura('player', healed, playerMaxAura);
+        floatText('player', `+${data.aura_robada} AURA`, 'heal');
+        await wait(reducedMotion ? 80 : 220);
+    }
+
+    if (data.estado === 'VICTORIA_RETADOR') {
+        updateAura('player', data.aura_retador, playerMaxAura);
+        confetti();
+        await wait(1200);
+        return;
+    }
+
+    let shield = null;
+    if (data.efecto_jugador === 'ESCUDO_CHILL') {
+        shield = shieldUp('player');
+        floatText('player', '¡ESCUDO!', 'heal');
+        await wait(reducedMotion ? 140 : 300);
+    }
+
+    if (shield) {
+        setTimeout(() => shieldPop(shield), reducedMotion ? 90 : 200);
+    }
+    await attackSequence('bot', 'player', data.dano_recibido, data.efecto_bot);
+    updateAura('player', data.aura_retador, playerMaxAura);
+
+    if (botHeal > 0) {
+        await stealOrbs('player', 'bot');
+        updateAura('opponent', data.aura_oponente, opponentMaxAura);
+    }
+
+    if (data.estado === 'DERROTA_RETADOR') {
+        await faintFighter('player');
+        await wait(200);
+        return;
+    }
+
+    await wait(reducedMotion ? 60 : 200);
 };
 
 const addLog = (html, isError = false) => {
@@ -314,16 +758,17 @@ buttons.forEach((button) => {
                 throw new Error(data.mensaje || 'El servidor sufrió daño crítico.');
             }
 
-            updateAura('player', data.aura_retador, playerMaxAura);
-            updateAura('opponent', data.aura_oponente, opponentMaxAura);
+            try {
+                await playTurn(data, button);
+            } catch (animError) {
+                updateAura('player', data.aura_retador, playerMaxAura);
+                updateAura('opponent', data.aura_oponente, opponentMaxAura);
+            }
+
             currentTurn = Number(data.turno) + 1;
             document.getElementById('turn-number').textContent = currentTurn;
             document.getElementById('wallet').textContent = formatCoins(data.auracoins_saldo).replace('+', '');
             addLog(`<strong>${michiEscapeHtml(data.carta_jugada)}</strong>: ${michiEscapeHtml(String(data.dano_realizado))} de daño. ${michiEscapeHtml(data.frase)}`);
-
-            stage.classList.remove('hit');
-            void stage.offsetWidth;
-            stage.classList.add('hit');
 
             if (data.estado !== 'BATALLANDO') {
                 showResult(data);
