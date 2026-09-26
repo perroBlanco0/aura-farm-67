@@ -1,0 +1,228 @@
+/* Michi Arena · reskin estilo Pokémon GO */
+:root {
+    --sky-1: #4a90d9;
+    --sky-2: #41b4d6;
+    --teal: #37bfa9;
+    --grass: #79c75e;
+    --lime: #b8ff36;
+    --lime-deep: #93d400;
+    --gold: #ffc93c;
+    --orange: #ff9a3d;
+    --red: #ff5a66;
+    --ink: #22304f;
+    --ink-soft: #39476e;
+    --muted: #7381a3;
+    --card: #ffffff;
+    --line: #e5ecf7;
+    --shadow-lg: 0 26px 60px rgba(28, 64, 128, .30);
+    --shadow-sm: 0 10px 24px rgba(28, 64, 128, .16);
+}
+
+* { box-sizing: border-box; }
+html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink);
+    font-family: Nunito, Inter, system-ui, sans-serif;
+    background: linear-gradient(180deg, #4a90d9 0%, #41b4d6 34%, #37bfa9 66%, #79c75e 100%) fixed;
+}
+
+/* nubes suaves sobre el cielo */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(240px 70px at 15% 12%, rgba(255, 255, 255, .55), transparent 70%),
+        radial-gradient(300px 80px at 82% 8%, rgba(255, 255, 255, .45), transparent 70%),
+        radial-gradient(360px 100px at 55% 26%, rgba(255, 255, 255, .25), transparent 70%);
+}
+
+main, .shell { position: relative; z-index: 1; }
+
+h1, h2, h3, .brand, button, .btn { font-family: Fredoka, "Archivo Black", sans-serif; }
+
+/* marca */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    color: #fff;
+    text-shadow: 0 2px 12px rgba(20, 50, 100, .4);
+}
+.brand-mark {
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--lime);
+    color: #223010;
+    font-weight: 700;
+    font-size: 1.15rem;
+    border: 3px solid rgba(255, 255, 255, .9);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .22);
+}
+
+/* nav tipo pills */
+.topnav, .nav { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.topnav a, .nav a {
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 800;
+    color: var(--ink);
+    text-decoration: none;
+    background: rgba(255, 255, 255, .88);
+    box-shadow: var(--shadow-sm);
+    transition: transform .15s, background .15s;
+}
+.topnav a:hover, .nav a:hover { transform: translateY(-2px); background: #fff; }
+.topnav a.activo { background: var(--ink); color: #fff; }
+
+.balance {
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-weight: 900;
+    color: #8a5b00;
+    background: linear-gradient(180deg, #ffe177, var(--gold));
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+}
+
+/* tarjetas blancas elevadas */
+.card, .panel {
+    background: var(--card);
+    border-radius: 26px;
+    box-shadow: var(--shadow-lg);
+}
+
+/* formularios */
+label {
+    display: block;
+    margin: 16px 0 8px;
+    font-weight: 900;
+    font-size: .8rem;
+    letter-spacing: .05em;
+    color: var(--ink-soft);
+}
+input[type=text], input[type=email], input[type=password], input[type=number], input:not([type]), select {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 16px;
+    border: 2px solid var(--line);
+    background: #f6f9ff;
+    color: var(--ink);
+    font: 700 1rem Nunito, sans-serif;
+    transition: border-color .15s, box-shadow .15s;
+}
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--sky-2);
+    box-shadow: 0 0 0 4px rgba(65, 180, 214, .18);
+}
+
+/* botones pill grandes */
+button, .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 0;
+    border-radius: 999px;
+    padding: 15px 26px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #233208;
+    background: linear-gradient(180deg, var(--lime), var(--lime-deep));
+    box-shadow: 0 10px 24px rgba(147, 212, 0, .42), inset 0 -3px 0 rgba(0, 0, 0, .10);
+    transition: transform .16s, box-shadow .16s;
+}
+button:hover, .btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 14px 30px rgba(147, 212, 0, .5), inset 0 -3px 0 rgba(0, 0, 0, .10);
+}
+button:active, .btn:active { transform: translateY(1px); }
+button:disabled, .btn:disabled { opacity: .45; cursor: not-allowed; transform: none !important; }
+
+.btn-secondary {
+    color: var(--ink);
+    background: #fff;
+    border: 2px solid var(--line);
+    box-shadow: var(--shadow-sm);
+}
+.btn-secondary:hover { border-color: var(--sky-2); box-shadow: var(--shadow-sm); }
+.btn-danger {
+    color: #fff;
+    background: linear-gradient(180deg, #ff7a85, var(--red));
+    box-shadow: 0 10px 24px rgba(255, 90, 102, .4);
+}
+.btn-sm { padding: 9px 16px; font-size: .78rem; }
+.btn-block { width: 100%; }
+
+/* avisos inline */
+.error, .ok {
+    padding: 13px 16px;
+    border-radius: 14px;
+    font-size: .88rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+.error { background: #ffe5e8; border: 2px solid #ffc2ca; color: #c23045; }
+.ok { background: #ecffd6; border: 2px solid #c8f59a; color: #4d7a00; }
+
+/* pills de estado */
+.pill {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: .66rem;
+    font-weight: 900;
+    letter-spacing: .06em;
+}
+.pill-admin { background: #fff3cf; color: #946500; }
+.pill-user { background: #eef2fb; color: var(--muted); }
+.pill-out { background: #ffe1e5; color: #c23045; }
+
+/* SweetAlert2 con marca */
+.michi-swal {
+    border-radius: 28px !important;
+    font-family: Nunito, sans-serif !important;
+    color: var(--ink) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+.michi-swal-title {
+    font-family: Fredoka, sans-serif !important;
+    color: var(--ink) !important;
+    font-weight: 600 !important;
+}
+.michi-swal .swal2-html-container { font-weight: 700; }
+.swal2-actions .michi-btn {
+    margin: 6px;
+    border: 0;
+    border-radius: 999px;
+    padding: 13px 26px;
+    font-family: Fredoka, sans-serif;
+    font-weight: 600;
+    font-size: .95rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform .15s;
+}
+.swal2-actions .michi-btn-confirm {
+    color: #233208;
+    background: linear-gradient(180deg, var(--lime), var(--lime-deep));
+    box-shadow: 0 8px 20px rgba(147, 212, 0, .42);
+}
+.swal2-actions .michi-btn-cancel { color: var(--ink); background: #eef2fb; }
+.swal2-actions .michi-btn:hover { transform: translateY(-1px); }
+.michi-toast { border-radius: 18px !important; box-shadow: var(--shadow-lg) !important; }

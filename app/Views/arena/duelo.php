@@ -6,135 +6,148 @@
     <title>Duelo #<?= esc($duelo['id']) ?> · Michi Arena</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/michi.css">
     <style>
-        :root {
-            --bg: #07080c;
-            --panel: #12151d;
-            --panel-2: #191d28;
-            --lime: #b8ff36;
-            --cyan: #44eaff;
-            --pink: #ff4fc8;
-            --gold: #ffd452;
-            --red: #ff536d;
-            --muted: #9ca4b7;
-        }
-        * { box-sizing: border-box; }
-        html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
-        body { margin: 0; min-height: 100vh; color: #fff; font-family: Inter, sans-serif; background: var(--bg); }
+        body { background: linear-gradient(180deg, #4a90d9 0%, #41b4d6 30%, #37bfa9 62%, #79c75e 100%) fixed; }
         button { font: inherit; }
         .arena {
             width: 100%; min-width: 0; max-width: 100%; min-height: 100vh; overflow-x: hidden;
             display: grid; grid-template-rows: auto 1fr auto;
-            background:
-                radial-gradient(circle at 50% 6%, rgba(255,79,200,.15), transparent 28rem),
-                radial-gradient(circle at 50% 68%, rgba(68,234,255,.08), transparent 34rem),
-                linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
-            background-size: auto, auto, 52px 52px, 52px 52px;
+            position: relative; z-index: 1;
         }
         .opponent, .board, .hand { width: 100%; min-width: 0; max-width: 100%; }
-        .opponent { padding: 22px clamp(16px, 4vw, 54px); border-bottom: 1px solid rgba(255,255,255,.08); background: rgba(9,10,15,.72); backdrop-filter: blur(18px); }
+        .opponent { padding: 18px clamp(16px, 4vw, 54px); }
         .opponent-inner, .board-inner, .hand-inner { width: min(1280px, 100%); min-width: 0; margin: 0 auto; }
-        .opponent-inner { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; }
-        .avatar {
-            width: 70px; height: 70px; border-radius: 18px; background: #242a38;
-            border: 2px solid var(--pink); box-shadow: 0 0 30px rgba(255,79,200,.2);
+        .opponent-inner {
+            display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px;
+            background: rgba(255, 255, 255, .92); border-radius: 24px; padding: 14px 20px;
+            box-shadow: var(--shadow-sm);
         }
-        .identity small { color: var(--pink); font-weight: 800; letter-spacing: .14em; }
-        .identity h1 { margin: 4px 0 0; font-size: clamp(1rem, 3vw, 1.45rem); }
+        .avatar {
+            width: 70px; height: 70px; border-radius: 50%; object-fit: cover;
+            border: 4px solid var(--orange); box-shadow: 0 8px 20px rgba(255, 154, 61, .35);
+        }
+        .identity small { color: var(--orange); font-weight: 900; letter-spacing: .12em; font-size: .7rem; }
+        .identity h1 { margin: 3px 0 0; font-size: clamp(1rem, 3vw, 1.4rem); font-weight: 600; color: var(--ink); }
         .aura-panel { min-width: min(430px, 42vw); }
-        .aura-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: .8rem; font-weight: 800; }
+        .aura-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: .78rem; font-weight: 900; color: var(--ink-soft); }
         .aura-label span:first-child { color: var(--muted); letter-spacing: .09em; }
-        .bar { height: 15px; overflow: hidden; border-radius: 999px; background: #272b36; box-shadow: inset 0 2px 8px rgba(0,0,0,.42); }
-        .bar-fill { height: 100%; border-radius: inherit; transition: width .55s cubic-bezier(.2,.8,.2,1); }
-        #opponent-bar { background: linear-gradient(90deg, var(--pink), var(--red)); box-shadow: 0 0 18px rgba(255,79,200,.42); }
-        #player-bar { background: linear-gradient(90deg, var(--cyan), var(--lime)); box-shadow: 0 0 18px rgba(68,234,255,.35); }
-        .board { min-height: 340px; padding: 28px clamp(16px, 4vw, 54px); display: grid; align-items: center; }
-        .board-inner { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 24px; }
+        .bar { height: 15px; overflow: hidden; border-radius: 999px; background: #e3e9f5; box-shadow: inset 0 2px 6px rgba(30, 60, 120, .18); }
+        .bar-fill { height: 100%; border-radius: inherit; transition: width .55s cubic-bezier(.2, .8, .2, 1); }
+        #opponent-bar { background: linear-gradient(90deg, var(--orange), var(--red)); }
+        #player-bar { background: linear-gradient(90deg, var(--sky-2), var(--lime-deep)); }
+
+        .board { min-height: 320px; padding: 24px clamp(16px, 4vw, 54px); display: grid; align-items: center; }
+        .board-inner { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 22px; }
         .stage {
-            min-height: 300px; border: 1px solid rgba(255,255,255,.09); border-radius: 24px;
-            display: grid; place-items: center; position: relative; overflow: hidden;
-            background: radial-gradient(circle, rgba(184,255,54,.08), transparent 55%), rgba(14,16,23,.72);
+            min-height: 280px; border-radius: 28px; display: grid; place-items: center;
+            position: relative; overflow: hidden;
+            background:
+                radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .55), transparent 55%),
+                rgba(255, 255, 255, .28);
+            border: 2px solid rgba(255, 255, 255, .45);
+            box-shadow: var(--shadow-sm);
         }
         .stage::before {
-            content: ""; position: absolute; width: 260px; height: 260px; border-radius: 50%;
-            border: 1px solid rgba(184,255,54,.12); box-shadow: 0 0 0 34px rgba(184,255,54,.018), 0 0 0 72px rgba(184,255,54,.012);
+            content: ""; position: absolute; width: 250px; height: 250px; border-radius: 50%;
+            border: 3px dashed rgba(255, 255, 255, .65);
+            box-shadow: 0 0 0 30px rgba(255, 255, 255, .10), 0 0 0 64px rgba(255, 255, 255, .05);
+            animation: spin 24s linear infinite;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .versus { position: relative; text-align: center; }
-        .versus strong { display: block; font: clamp(4rem, 10vw, 8.2rem)/.8 "Archivo Black", sans-serif; color: rgba(255,255,255,.06); letter-spacing: -.08em; }
-        .versus span { display: inline-block; margin-top: 22px; color: var(--lime); font-weight: 800; letter-spacing: .18em; }
-        .stage.hit { animation: impact .42s ease; }
-        @keyframes impact { 35% { transform: scale(.985); filter: saturate(1.8); } 60% { box-shadow: inset 0 0 100px rgba(255,83,109,.18); } }
-        .feed { border: 1px solid rgba(255,255,255,.09); border-radius: 20px; background: rgba(18,21,29,.9); overflow: hidden; }
-        .feed-title { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.08); color: var(--cyan); font-size: .74rem; font-weight: 800; letter-spacing: .14em; }
-        #battle-log { height: 244px; overflow: auto; padding: 8px 16px 16px; scrollbar-width: thin; }
-        .log-entry { padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,.055); color: #c8cede; font-size: .78rem; line-height: 1.55; }
-        .log-entry strong { color: var(--lime); }
-        .log-entry.error { color: #ff91a3; }
-        .hand { overflow: hidden; padding: 22px clamp(16px, 4vw, 54px) 30px; border-top: 1px solid rgba(255,255,255,.08); background: #0c0e14; }
-        .hand-inner { overflow: hidden; }
-        .hand-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 420px) auto; align-items: end; gap: 22px; margin-bottom: 18px; }
-        .hand-head > * { min-width: 0; }
-        .hand-title small { display: block; color: var(--cyan); letter-spacing: .14em; font-weight: 800; }
-        .hand-title h2 { margin: 5px 0 0; font: 1.35rem "Archivo Black", sans-serif; }
-        .player-aura .aura-label { margin-bottom: 7px; }
-        .wallet { color: var(--gold); font-weight: 800; white-space: nowrap; }
-        .cards { display: grid; width: 100%; grid-template-columns: repeat(6, minmax(158px, 1fr)); gap: 13px; min-width: 0; max-width: 100%; }
-        .card {
-            position: relative; min-height: 255px; display: flex; flex-direction: column; overflow: hidden;
-            border: 1px solid rgba(255,255,255,.13); border-radius: 18px; background: linear-gradient(155deg, #202532, #11141c);
-            transition: transform .2s, border-color .2s, box-shadow .2s;
+        .versus strong {
+            display: block; font: 700 clamp(4rem, 10vw, 7.6rem)/.8 Fredoka, sans-serif;
+            color: rgba(255, 255, 255, .85); letter-spacing: -.04em;
+            text-shadow: 0 4px 0 rgba(30, 60, 120, .25);
         }
-        .card:hover { transform: translateY(-7px); border-color: var(--cyan); box-shadow: 0 18px 36px rgba(0,0,0,.34); }
-        .card-image { height: 102px; width: 100%; object-fit: contain; background: linear-gradient(135deg, rgba(68,234,255,.11), rgba(255,79,200,.1)); }
-        .card-body { padding: 12px; display: flex; flex: 1; flex-direction: column; }
-        .card h3 { margin: 0 0 8px; font-size: .9rem; line-height: 1.1; }
-        .rarity { position: absolute; top: 9px; right: 9px; z-index: 1; padding: 5px 7px; border-radius: 8px; color: #fff; background: #596071; font-size: .62rem; font-weight: 800; }
+        .versus span {
+            display: inline-block; margin-top: 20px; padding: 7px 16px; border-radius: 999px;
+            color: #233208; background: var(--lime); font-weight: 900; letter-spacing: .12em; font-size: .78rem;
+            box-shadow: 0 6px 16px rgba(147, 212, 0, .4);
+        }
+        .stage.hit { animation: impact .42s ease; }
+        @keyframes impact { 35% { transform: scale(.985); filter: saturate(1.6); } 60% { box-shadow: inset 0 0 100px rgba(255, 90, 102, .25); } }
+
+        .feed { border-radius: 22px; background: rgba(255, 255, 255, .92); overflow: hidden; box-shadow: var(--shadow-sm); }
+        .feed-title { padding: 13px 16px; border-bottom: 2px dashed var(--line); color: var(--sky-1); font-size: .72rem; font-weight: 900; letter-spacing: .14em; }
+        #battle-log { height: 230px; overflow: auto; padding: 8px 16px 16px; scrollbar-width: thin; }
+        .log-entry { padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-size: .8rem; font-weight: 700; line-height: 1.55; }
+        .log-entry strong { color: var(--sky-1); }
+        .log-entry.error { color: var(--red); }
+
+        .hand { overflow: hidden; padding: 20px clamp(16px, 4vw, 54px) 30px; }
+        .hand-inner { overflow: hidden; }
+        .hand-head {
+            display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 420px) auto;
+            align-items: end; gap: 22px; margin-bottom: 18px;
+            background: rgba(255, 255, 255, .92); border-radius: 24px; padding: 16px 20px;
+            box-shadow: var(--shadow-sm);
+        }
+        .hand-head > * { min-width: 0; }
+        .hand-title small { display: block; color: var(--sky-1); letter-spacing: .14em; font-weight: 900; }
+        .hand-title h2 { margin: 4px 0 0; font: 600 1.3rem Fredoka, sans-serif; color: var(--ink); }
+        .player-aura .aura-label { margin-bottom: 7px; }
+        .wallet { color: #8a5b00; font-weight: 900; white-space: nowrap; background: linear-gradient(180deg, #ffe177, var(--gold)); border-radius: 999px; padding: 9px 16px; }
+
+        /* cartas coleccionables estilo PoGO */
+        .cards { display: grid; width: 100%; grid-template-columns: repeat(6, minmax(158px, 1fr)); gap: 13px; min-width: 0; max-width: 100%; }
+        .mcard {
+            position: relative; min-height: 255px; display: flex; flex-direction: column; overflow: hidden;
+            border-radius: 20px; background: #fff; border: 3px solid #fff;
+            box-shadow: var(--shadow-sm);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .mcard:hover { transform: translateY(-7px) rotate(-1deg); box-shadow: var(--shadow-lg); }
+        .mcard-image {
+            height: 104px; width: 100%; object-fit: contain;
+            background: linear-gradient(135deg, #d8f2ff, #e6f9d8);
+        }
+        .mcard-body { padding: 12px; display: flex; flex: 1; flex-direction: column; }
+        .mcard h3 { margin: 0 0 8px; font-size: .92rem; font-weight: 600; line-height: 1.1; color: var(--ink); }
+        .lvl {
+            position: absolute; top: 8px; right: 8px; z-index: 1;
+            min-width: 34px; height: 34px; padding: 0 7px; border-radius: 999px;
+            display: grid; place-items: center;
+            color: #fff; background: #596071; font-size: .6rem; font-weight: 900; line-height: 1;
+            border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0, 0, 0, .2);
+        }
         .rareza-rara { background: #2467d8; }
         .rareza-epica { background: #8a45d8; }
-        .rareza-67 { color: #1a1300; background: linear-gradient(100deg, #ffd452, #ff944d); box-shadow: 0 0 18px rgba(255,212,82,.45); }
+        .rareza-67 { color: #4a3500; background: linear-gradient(140deg, var(--gold), var(--orange)); }
         .stats { display: flex; gap: 7px; margin-bottom: 8px; }
-        .stat { flex: 1; padding: 6px; border-radius: 8px; text-align: center; background: rgba(255,255,255,.055); font-size: .68rem; }
-        .stat b { display: block; color: var(--lime); font-size: .82rem; }
-        .effect { margin: 0 0 10px; color: var(--muted); font-size: .62rem; font-weight: 700; letter-spacing: .06em; }
+        .stat {
+            flex: 1; padding: 6px 4px; border-radius: 10px; text-align: center;
+            background: #f2f7ff; border: 1.5px solid var(--line);
+            font-size: .62rem; font-weight: 900; color: var(--muted);
+        }
+        .stat b { display: block; color: var(--sky-1); font-size: .85rem; font-family: Fredoka, sans-serif; }
+        .effect { margin: 0 0 10px; color: var(--muted); font-size: .62rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
         .play-card {
-            margin-top: auto; width: 100%; border: 0; border-radius: 10px; padding: 9px 8px; cursor: pointer;
-            color: #080a0d; background: var(--lime); font-size: .7rem; font-weight: 800; transition: opacity .2s, transform .2s;
+            margin-top: auto; width: 100%; padding: 10px 8px; font-size: .72rem;
         }
-        .play-card:hover { transform: scale(1.025); }
-        .play-card:disabled { cursor: not-allowed; opacity: .32; transform: none; }
-        .result {
-            position: fixed; inset: 0; z-index: 10; display: none; place-items: center; padding: 20px;
-            background: rgba(4,5,8,.86); backdrop-filter: blur(12px);
-        }
-        .result.show { display: grid; }
-        .result-card { width: min(480px, 100%); padding: 38px; border: 1px solid rgba(255,255,255,.14); border-radius: 26px; text-align: center; background: #151922; box-shadow: 0 30px 100px rgba(0,0,0,.6); }
-        .result-card small { color: var(--cyan); letter-spacing: .16em; font-weight: 800; }
-        .result-card h2 { margin: 11px 0; font: clamp(2rem, 7vw, 3.5rem)/1 "Archivo Black", sans-serif; }
-        .result-card p { color: #c8cede; line-height: 1.6; }
-        .result-card a { display: block; margin-top: 20px; padding: 14px; border-radius: 12px; color: #080a0d; background: var(--lime); font-weight: 800; text-decoration: none; }
+
         @media (max-width: 980px) {
             .cards { display: flex; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; padding: 6px 2px 14px; }
-            .card { flex: 0 0 180px; min-width: 0; scroll-snap-align: start; }
+            .mcard { flex: 0 0 180px; min-width: 0; scroll-snap-align: start; }
         }
         @media (max-width: 760px) {
-            .opponent { padding-top: 15px; padding-bottom: 15px; }
-            .opponent-inner { grid-template-columns: 52px 1fr; gap: 12px; }
-            .avatar { width: 52px; height: 52px; border-radius: 14px; }
+            .opponent { padding-top: 14px; padding-bottom: 14px; }
+            .opponent-inner { grid-template-columns: 52px 1fr; gap: 12px; padding: 12px 14px; }
+            .avatar { width: 52px; height: 52px; border-width: 3px; }
             .aura-panel { grid-column: 1 / -1; min-width: 0; }
-            .board { padding-top: 18px; padding-bottom: 18px; }
+            .board { padding-top: 14px; padding-bottom: 14px; }
             .board-inner { grid-template-columns: 1fr; }
-            .stage { min-height: 170px; }
+            .stage { min-height: 160px; }
             .feed { display: none; }
             .hand-head { grid-template-columns: 1fr auto; gap: 12px; }
             .player-aura { grid-column: 1 / -1; grid-row: 2; }
-            .hand { padding-top: 17px; }
         }
         @media (max-width: 480px) {
             .hand-head { grid-template-columns: minmax(0, 1fr); align-items: stretch; }
             .player-aura { grid-column: 1; grid-row: auto; }
-            .wallet { white-space: normal; }
+            .wallet { white-space: normal; text-align: center; }
         }
     </style>
 </head>
@@ -142,7 +155,7 @@
 <main class="arena">
     <section class="opponent">
         <div class="opponent-inner">
-            <img class="avatar" src="/img/cartas/bot.gif" alt="" style="object-fit: cover;">
+            <img class="avatar" src="/img/cartas/bot.gif" alt="">
             <div class="identity">
                 <small>RIVAL MICHI</small>
                 <h1><?= esc($duelo['bot_nombre']) ?></h1>
@@ -194,14 +207,14 @@
 
             <div class="cards">
                 <?php foreach ($mazo as $carta): ?>
-                    <article class="card">
-                        <span class="rarity <?= esc(badge_rareza((int) $carta['rareza_nivel'])) ?>">LVL <?= esc($carta['rareza_nivel']) ?></span>
-                        <img class="card-image" src="<?= esc($carta['imagen_url']) ?>" alt="" draggable="false">
-                        <div class="card-body">
+                    <article class="mcard">
+                        <span class="lvl <?= esc(badge_rareza((int) $carta['rareza_nivel'])) ?>">LVL <?= esc($carta['rareza_nivel']) ?></span>
+                        <img class="mcard-image" src="<?= esc($carta['imagen_url']) ?>" alt="" draggable="false">
+                        <div class="mcard-body">
                             <h3><?= esc($carta['nombre']) ?></h3>
                             <div class="stats">
-                                <span class="stat"><b><?= esc($carta['ataque_aura']) ?></b>ATAQUE</span>
-                                <span class="stat"><b><?= esc($carta['defensa_cringe']) ?></b>ANTI-CRINGE</span>
+                                <span class="stat"><b><?= esc($carta['ataque_aura']) ?></b>⚔️ ATAQUE</span>
+                                <span class="stat"><b><?= esc($carta['defensa_cringe']) ?></b>🛡️ ANTI-CRINGE</span>
                             </div>
                             <p class="effect"><?= esc(str_replace('_', ' ', $carta['efecto_especial'])) ?></p>
                             <button class="play-card" type="button" data-card-id="<?= esc($carta['id']) ?>" <?= $duelo['estado'] !== 'BATALLANDO' ? 'disabled' : '' ?>>
@@ -215,19 +228,12 @@
     </section>
 </main>
 
-<div id="result" class="result" role="dialog" aria-modal="true">
-    <div class="result-card">
-        <small id="result-label">DUELO TERMINADO</small>
-        <h2 id="result-title"></h2>
-        <p id="result-copy"></p>
-        <strong id="result-coins"></strong>
-        <a href="<?= site_url('arena') ?>">VOLVER A LA ARENA</a>
-    </div>
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/js/michi.js"></script>
 <script>
 const duelId = <?= (int) $duelo['id'] ?>;
 const playUrl = <?= json_encode(site_url('arena/jugar'), JSON_UNESCAPED_SLASHES) ?>;
+const arenaUrl = <?= json_encode(site_url('arena'), JSON_UNESCAPED_SLASHES) ?>;
 const csrfName = <?= json_encode(csrf_token()) ?>;
 const csrfHash = <?= json_encode(csrf_hash()) ?>;
 const playerMaxAura = <?= (int) $duelo['aura_max_retador'] ?>;
@@ -266,13 +272,16 @@ const setBusy = (busy) => {
 
 const showResult = (data) => {
     const won = data.estado === 'VICTORIA_RETADOR';
-    document.getElementById('result-title').textContent = won ? 'W ABSOLUTA' : 'CRINGE TOTAL';
-    document.getElementById('result-title').style.color = won ? 'var(--lime)' : 'var(--red)';
-    document.getElementById('result-copy').textContent = data.frase_resultado;
-    document.getElementById('result-coins').textContent = won
-        ? `Pozo cobrado: ${formatCoins(data.auracoins_movimiento)}`
-        : `Apuesta perdida: ${formatCoins(data.auracoins_movimiento)}`;
-    document.getElementById('result').classList.add('show');
+    michiSwal({
+        icon: won ? 'success' : 'error',
+        title: won ? '¡W ABSOLUTA!' : 'CRINGE TOTAL',
+        html: `<p style="margin:0 0 10px">${michiEscapeHtml(data.frase_resultado)}</p>`
+            + `<strong style="font-family:Fredoka,sans-serif;font-size:1.1rem;color:${won ? '#4d7a00' : '#c23045'}">`
+            + `${won ? 'Pozo cobrado' : 'Apuesta perdida'}: ${michiEscapeHtml(formatCoins(data.auracoins_movimiento))}</strong>`,
+        confirmButtonText: 'VOLVER A LA ARENA',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+    }).then(() => { window.location.href = arenaUrl; });
 };
 
 buttons.forEach((button) => {
@@ -310,7 +319,7 @@ buttons.forEach((button) => {
             currentTurn = Number(data.turno) + 1;
             document.getElementById('turn-number').textContent = currentTurn;
             document.getElementById('wallet').textContent = formatCoins(data.auracoins_saldo).replace('+', '');
-            addLog(`<strong>${data.carta_jugada}</strong>: ${data.dano_realizado} de daño. ${data.frase}`);
+            addLog(`<strong>${michiEscapeHtml(data.carta_jugada)}</strong>: ${michiEscapeHtml(String(data.dano_realizado))} de daño. ${michiEscapeHtml(data.frase)}`);
 
             stage.classList.remove('hit');
             void stage.offsetWidth;
@@ -324,7 +333,8 @@ buttons.forEach((button) => {
             requestInFlight = false;
             setBusy(false);
         } catch (error) {
-            addLog(error.message, true);
+            addLog(michiEscapeHtml(error.message), true);
+            MichiToast.fire({ icon: 'error', title: error.message });
             requestInFlight = false;
             setBusy(false);
         }
