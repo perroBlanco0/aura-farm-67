@@ -1,60 +1,61 @@
-# Aura Farm 67 · donación ficticia 🐱
+# Aura Arena 67
 
-Sitio de broma: simula una donación, pide "tarjeta" solo como gag y termina con
-"¡TE LA CREÍSTE WE!". No se cobra nada y **nunca** se envían ni guardan datos de tarjeta.
+Juego web de duelos de cartas meme y apuestas de AuraCoins construido con CodeIgniter 4 y MySQL 8.
+El flujo del backend es deliberadamente directo: `Controlador -> Modelo -> Vista/JSON`.
+Todo cálculo de combate, efecto de carta y movimiento de moneda ocurre dentro de stored procedures.
 
-## Estructura
+## Requisitos
 
-- `public/index.html` — frontend (SweetAlert2, gatos de Cataas, responsive, QR del sitio y del diploma).
-- `public/admin.html` — panel de gobernanza: login por enlace mágico, donaciones y bitácora según rol.
-- `public/governance.config.js` — roles, permisos, campos permitidos/prohibidos, retención y eventos trazados.
-- `supabase/functions/donar/index.ts` — Edge Function: calcula el aura, manda el
-  correo por Resend y guarda la donación en Postgres.
-- `supabase/migrations/0001_donaciones.sql` — tabla `donaciones` con RLS activo
-  (solo la función, con service_role, escribe).
-- `supabase/migrations/0002_roles_rls.sql` — tabla `user_roles` y políticas por rol.
-- `supabase/migrations/0003_auditoria.sql` — bitácora `auditoria` y triggers de traza.
-- `netlify.toml` — publica `public/`.
+- PHP 8.2 o superior con `intl`, `mbstring` y `mysqli`.
+- Composer 2.
+- MySQL 8.
 
-## Gobernanza
+## Instalación local
 
-| Rol | Autenticado | Puede |
-| --- | --- | --- |
-| donante | no | crear una donación (solo vía la Edge Function) |
-| lector | sí | leer donaciones y auditoría |
-| admin | sí | además editar/borrar donaciones y asignar roles |
-
-Todo usuario que se registra entra como `lector`; para promover a admin:
-
-```sql
-update public.user_roles set rol = 'admin' where user_id = '<uuid>';
-```
-
-La Edge Function rechaza cualquier campo fuera de `nombre, email, monto, moneda`
-(los datos de tarjeta del gag nunca salen del navegador) y traza cada evento en
-`public.auditoria`, junto con los triggers que registran altas, cambios y bajas.
-
-## Despliegue
-
-1. Base de datos y función:
+1. Instala las dependencias:
 
    ```bash
-   supabase link --project-ref <PROJECT_REF>
-   supabase db push
-   supabase secrets set RESEND_API_KEY=<key>
-   supabase functions deploy donar
+   composer install
    ```
 
-2. En `public/index.html`, apunta `API_URL` a
-   `https://<PROJECT_REF>.supabase.co/functions/v1/donar`.
+2. Crea el archivo de entorno:
 
-3. Frontend: conecta el repo en Netlify (o Vercel/Cloudflare Pages); no requiere build.
+   ```bash
+   cp env .env
+   ```
 
-`SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` ya vienen inyectadas en las Edge Functions.
-Con el remitente de prueba `onboarding@resend.dev` solo puedes enviar a tu propio
-correo registrado en Resend; para cualquier destinatario hay que verificar un dominio.
+   Ajusta en `.env` el usuario, contraseña, host y puerto de MySQL si no usas los valores locales
+   por defecto.
 
-## Contrato
+3. Importa la base de datos, los seeds y los procedimientos:
 
-`POST /donar` con `{ nombre, email, monto, moneda }` responde
-`{ id, aura, mensaje, correo_enviado, guardado, meme }`.
+   ```bash
+   mysql -u root -p < database/aura_duelos.sql
+   ```
+
+   El script es idempotente: crea `aura_duelos`, conserva el progreso mutable de jugadores
+   existentes y recrea los procedimientos con su versión actual.
+
+4. Inicia CodeIgniter:
+
+   ```bash
+   php spark serve
+   ```
+
+5. Abre `http://localhost:8080`.
+
+El seed incluye al jugador `AuraFarmer67` con 2.500 AuraCoins, al rival
+`The Rizzler Bot` y seis cartas. El selector del lobby retiene la apuesta al crear el duelo.
+
+## Arquitectura
+
+- `database/aura_duelos.sql`: tablas, seeds, `sp_iniciar_duelo_meme` y `sp_jugar_carta_turno`.
+- `app/Controllers/Arena.php`: lobby, creación de duelo, mesa y endpoint AJAX.
+- `app/Models/ArenaModel.php`: consultas planas y llamadas `CALL sp_...`.
+- `app/Helpers/funciones_helper.php`: formato de AuraCoins, barra, rareza y frases meme.
+- `app/Views/arena/`: lobby y mesa responsiva.
+
+### Contrato AJAX
+
+`POST /arena/jugar` recibe `duelo_id` y `carta_id`. Responde JSON con el daño realizado y
+recibido, Aura restante, efectos activados, saldo de AuraCoins, frase del turno y estado final.

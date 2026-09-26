@@ -1,4 +1,0 @@
-project_id = "aura67"
-
-[functions.donar]
-verify_jwt = false
