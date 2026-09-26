@@ -49,6 +49,27 @@ class Arena extends BaseController
         return redirect()->to('/arena/duelo/' . $duelo['duelo_id']);
     }
 
+    public function iniciarJefe()
+    {
+        $apuesta = (int) $this->request->getPost('apuesta');
+
+        if ($apuesta <= 0) {
+            return redirect()->to('/mapa')->with('error', 'Elige una apuesta de AuraCoins válida.');
+        }
+
+        try {
+            $duelo = (new ArenaModel())->crearDueloJefe($this->jugadorId(), $apuesta);
+        } catch (Throwable $error) {
+            return redirect()->to('/mapa')->with('error', $error->getMessage());
+        }
+
+        if (! isset($duelo['duelo_id'])) {
+            return redirect()->to('/mapa')->with('error', 'El jefe no pudo ser desafiado.');
+        }
+
+        return redirect()->to('/arena/duelo/' . $duelo['duelo_id']);
+    }
+
     public function duelo(int $id): string
     {
         $arena = new ArenaModel();

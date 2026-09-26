@@ -38,6 +38,48 @@ class Auth extends BaseController
         ]);
     }
 
+    public function registro()
+    {
+        if (! $this->request->is('post')) {
+            return view('auth/registro', ['error' => null]);
+        }
+
+        $username = trim((string) $this->request->getPost('username'));
+        $correo = trim((string) $this->request->getPost('email'));
+        $clave = (string) $this->request->getPost('clave');
+        $clave2 = (string) $this->request->getPost('clave2');
+
+        if (strlen($clave) < 6 || $clave !== $clave2) {
+            return view('auth/registro', [
+                'error' => 'La clave necesita al menos 6 caracteres y ambas deben coincidir.',
+            ]);
+        }
+
+        try {
+            $jugador = (new UsuariosModel())->registrarJugador(
+                $username,
+                $correo,
+                password_hash($clave, PASSWORD_BCRYPT)
+            );
+        } catch (Throwable $error) {
+            return view('auth/registro', ['error' => $error->getMessage()]);
+        }
+
+        if (empty($jugador['jugador_id'])) {
+            return view('auth/registro', ['error' => 'No se pudo crear tu michi. Intenta de nuevo.']);
+        }
+
+        $this->enviarCorreoBienvenida($correo, (string) $jugador['username']);
+
+        session()->set([
+            'jugador_id' => (int) $jugador['jugador_id'],
+            'username' => $jugador['username'],
+            'es_admin' => 0,
+        ]);
+
+        return redirect()->to('/mapa');
+    }
+
     public function salir()
     {
         session()->destroy();
@@ -111,6 +153,32 @@ class Auth extends BaseController
         }
 
         return redirect()->to('/login')->with('ok', 'Clave actualizada. Entra con tu nueva contraseña, michi.');
+    }
+
+    private function enviarCorreoBienvenida(string $correo, string $username): void
+    {
+        try {
+            $email = \Config\Services::email();
+            $email->setTo($correo);
+            $email->setSubject('Bienvenido a Michi Arena, ' . $username);
+            $email->setMessage(view('emails/bienvenida', [
+                'username' => $username,
+                'enlace' => base_url('mapa'),
+            ]));
+            $email->setAltMessage(
+                "Hola {$username}, ¡bienvenido a Michi Arena! Ya tienes 1000 de Aura, 1500 AuraCoins y tu mazo completo. Entra aquí: " . base_url('mapa')
+            );
+
+            if (! $email->send(false)) {
+                log_message('error', 'No se pudo enviar correo de bienvenida: {debug}', [
+                    'debug' => $email->printDebugger(['headers', 'subject']),
+                ]);
+            }
+        } catch (Throwable $error) {
+            log_message('error', 'Error enviando correo de bienvenida: {msg}', [
+                'msg' => $error->getMessage(),
+            ]);
+        }
     }
 
     private function enviarCorreoCodigo(string $correo, string $username, string $codigo): void

@@ -80,6 +80,14 @@ class UsuariosModel extends Model
         );
     }
 
+    public function registrarJugador(string $username, string $email, string $passwordHash): array
+    {
+        return $this->llamarProc(
+            'CALL sp_registrar_jugador(?, ?, ?)',
+            [$username, $email, $passwordHash]
+        );
+    }
+
     private function llamarProc(string $sql, array $params): array
     {
         $query = $this->db->query($sql, $params);

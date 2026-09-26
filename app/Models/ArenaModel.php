@@ -21,6 +21,19 @@ class ArenaModel extends Model
         return $resultado;
     }
 
+    public function crearDueloJefe(int $jugadorId, int $apuesta): array
+    {
+        $query = $this->db->query(
+            'CALL sp_iniciar_duelo_jefe(?, ?)',
+            [$jugadorId, $apuesta]
+        );
+        $resultado = $query->getRowArray() ?? [];
+        $query->freeResult();
+        $this->limpiarResultadosProcedimiento();
+
+        return $resultado;
+    }
+
     public function lanzarCarta(int $dueloId, int $cartaId, int $turnoEsperado, int $jugadorId): array
     {
         $query = $this->db->query(

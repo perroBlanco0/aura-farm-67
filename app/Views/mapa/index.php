@@ -248,6 +248,82 @@
         .stat-michi.atk { color: var(--pink); }
         .stat-michi.def { color: var(--lime); }
 
+        .marker-jefe {
+            width: 66px; height: 66px; border-radius: 50%;
+            border: 3px solid #ff3355;
+            box-shadow: 0 0 0 5px rgba(255,51,85,.25), 0 0 40px rgba(255,51,85,.55), 0 10px 26px rgba(0,0,0,.6);
+            background: #1a0508; object-fit: cover;
+            animation: latidoJefe 1.6s ease-in-out infinite;
+        }
+        @keyframes latidoJefe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.09); }
+        }
+        .jefe-wrap { position: relative; width: 66px; height: 66px; }
+        .aura-jefe {
+            position: absolute; inset: -16px; border-radius: 50%;
+            border: 2px solid rgba(255,51,85,.5);
+            animation: pulso 1.8s ease-out infinite;
+            pointer-events: none;
+        }
+
+        .cinematica {
+            position: fixed; inset: 0; z-index: 4000;
+            background: radial-gradient(ellipse at 50% 40%, #1c0a10 0%, #06030a 70%);
+            display: none; place-items: center;
+            flex-direction: column; text-align: center;
+            padding: 24px;
+        }
+        .cinematica.activa { display: grid; animation: cineFade .45s ease; }
+        @keyframes cineFade { from { opacity: 0; } to { opacity: 1; } }
+        .cinematica.temblor { animation: cineFade .45s ease, temblor .45s linear 1.15s; }
+        @keyframes temblor {
+            0%, 100% { transform: translate(0,0); }
+            15% { transform: translate(-10px,5px); }
+            30% { transform: translate(9px,-6px); }
+            45% { transform: translate(-8px,-4px); }
+            60% { transform: translate(7px,6px); }
+            75% { transform: translate(-6px,3px); }
+        }
+        .cine-alerta {
+            color: #ff3355; font-family: "Archivo Black", sans-serif;
+            font-size: clamp(1.05rem, 5vw, 1.6rem); letter-spacing: .14em;
+            animation: parpadeo .32s steps(2) 4;
+        }
+        @keyframes parpadeo { 50% { opacity: 0; } }
+        .cine-jefe { display: none; }
+        .cine-jefe.visible { display: block; }
+        .cine-jefe img {
+            width: min(240px, 58vw); height: min(240px, 58vw); object-fit: cover;
+            border-radius: 30px; border: 4px solid #ff3355;
+            box-shadow: 0 0 80px rgba(255,51,85,.6), 0 30px 60px rgba(0,0,0,.7);
+            animation: caidaJefe .55s cubic-bezier(.15,1.6,.35,1) backwards;
+        }
+        @keyframes caidaJefe {
+            0% { transform: translateY(-120vh) scale(1.6) rotate(-8deg); opacity: 0; }
+            100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+        }
+        .cine-titulo {
+            margin: 22px 0 4px; color: #fff;
+            font-family: "Archivo Black", sans-serif;
+            font-size: clamp(1.6rem, 7vw, 2.6rem); letter-spacing: .04em;
+            text-shadow: 0 0 30px rgba(255,51,85,.8);
+            animation: parpadeo .5s steps(2) 2;
+        }
+        .cine-sub { color: #ff9bac; font-weight: 800; font-size: .85rem; letter-spacing: .1em; }
+        .cine-panel { display: none; width: min(380px, 100%); margin-top: 26px; }
+        .cine-panel.visible { display: block; animation: cineSube .5s cubic-bezier(.2,1.4,.4,1) backwards; }
+        @keyframes cineSube { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .cine-panel .select-apuesta { margin-top: 0; }
+        .cine-acciones { display: flex; gap: 12px; margin-top: 16px; }
+        .cine-acciones button {
+            flex: 1; border: 0; border-radius: 14px; padding: 15px 10px;
+            font: 800 .9rem Inter, sans-serif; letter-spacing: .05em; cursor: pointer;
+        }
+        .btn-desafiar { background: linear-gradient(100deg, #ff3355, #ff7b54); color: #fff; box-shadow: 0 12px 36px rgba(255,51,85,.4); }
+        .btn-desafiar:hover { filter: brightness(1.1); }
+        .btn-huir { background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.16) !important; }
+
         @media (max-width: 560px) {
             .hud { padding: 8px 10px; gap: 8px; }
             .brand span:last-child { display: none; }
@@ -292,6 +368,27 @@
     <input type="hidden" name="apuesta" id="inputApuesta" value="">
 </form>
 
+<form id="formJefe" action="<?= site_url('arena/jefe') ?>" method="post" style="display:none">
+    <?= csrf_field() ?>
+    <input type="hidden" name="apuesta" id="inputApuestaJefe" value="">
+</form>
+
+<div class="cinematica" id="cinematica" role="dialog" aria-modal="true">
+    <p class="cine-alerta" id="cineAlerta">⚠ UNA PRESENCIA SUPREMA SE ACERCA ⚠</p>
+    <div class="cine-jefe" id="cineJefe">
+        <img src="/img/cartas/boss.png" alt="El Michi Supremo">
+        <h2 class="cine-titulo">EL MICHI SUPREMO</h2>
+        <p class="cine-sub">JEFE FINAL · NIVEL 67 · CASI INVENCIBLE</p>
+    </div>
+    <div class="cine-panel" id="cinePanel">
+        <select id="selApuestaJefe" class="select-apuesta"></select>
+        <div class="cine-acciones">
+            <button type="button" class="btn-huir" id="btnHuirJefe">Huir</button>
+            <button type="button" class="btn-desafiar" id="btnDesafiarJefe">⚔ DESAFIAR</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -306,6 +403,7 @@
         ];
     }, $mazo ?? []), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     const AURACOINS = <?= (int) $jugador['auracoins'] ?>;
+    const AVATAR_JUGADOR = <?= json_encode($jugador['avatar_url'] ?? '/img/cartas/michi.jpg') ?>;
     const APUESTAS = [100, 250, 500, 1000, 2000];
     const CENTRO_FALLBACK = [-33.4489, -70.6693];
     const RADIO_SPAWN_M = 800;
@@ -326,7 +424,7 @@
     const chipUbicacion = document.getElementById('chipUbicacion');
 
     const iconoJugador = L.divIcon({
-        html: '<div class="jugador-wrap"><img src="/img/cartas/michi.jpg" class="marker-jugador" alt="Tú"><span class="pulso"></span></div>',
+        html: `<div class="jugador-wrap"><img src="${AVATAR_JUGADOR}" class="marker-jugador" alt="Tú"><span class="pulso"></span></div>`,
         iconSize: [52, 52],
         iconAnchor: [26, 26],
         popupAnchor: [0, -30],
@@ -427,7 +525,67 @@
             marker.on('click', () => pelear(carta));
             spawns.push(marker);
         }
+
+        const posJefe = puntoAleatorio(centro, RADIO_SPAWN_M);
+        const iconoJefe = L.divIcon({
+            html: '<div class="jefe-wrap"><img src="/img/cartas/boss.png" class="marker-jefe" alt=""><span class="aura-jefe"></span></div>',
+            iconSize: [66, 66],
+            iconAnchor: [33, 33],
+            className: '',
+        });
+        const markerJefe = L.marker(posJefe, { icon: iconoJefe, zIndexOffset: 900 })
+            .addTo(mapa)
+            .bindTooltip('⚠ EL MICHI SUPREMO', {
+                className: 'tooltip-michi',
+                direction: 'top',
+                offset: [0, -38],
+            });
+        markerJefe.on('click', abrirCinematica);
+        spawns.push(markerJefe);
     }
+
+    const cinematica = document.getElementById('cinematica');
+    let cineTimers = [];
+
+    function abrirCinematica() {
+        const alerta = document.getElementById('cineAlerta');
+        const jefe = document.getElementById('cineJefe');
+        const panel = document.getElementById('cinePanel');
+        const sel = document.getElementById('selApuestaJefe');
+
+        alerta.style.display = 'block';
+        jefe.classList.remove('visible');
+        panel.classList.remove('visible');
+        sel.innerHTML = opcionesApuesta();
+        cinematica.classList.add('activa');
+
+        cineTimers.forEach(t => clearTimeout(t));
+        cineTimers = [
+            setTimeout(() => {
+                cinematica.classList.add('temblor');
+                alerta.style.display = 'none';
+                jefe.classList.add('visible');
+            }, 1400),
+            setTimeout(() => panel.classList.add('visible'), 2200),
+        ];
+    }
+
+    function cerrarCinematica() {
+        cineTimers.forEach(t => clearTimeout(t));
+        cineTimers = [];
+        cinematica.classList.remove('activa', 'temblor');
+    }
+
+    document.getElementById('btnHuirJefe').addEventListener('click', cerrarCinematica);
+    document.getElementById('btnDesafiarJefe').addEventListener('click', () => {
+        const valor = parseInt(document.getElementById('selApuestaJefe').value, 10);
+        if (! valor || valor > AURACOINS) {
+            Swal.fire({ title: 'SIN AURACOINS', text: 'No te alcanzan los AuraCoins para esa apuesta.', icon: 'warning' });
+            return;
+        }
+        document.getElementById('inputApuestaJefe').value = valor;
+        document.getElementById('formJefe').submit();
+    });
 
     function centroActual() {
         return markerJugador ? markerJugador.getLatLng() : mapa.getCenter();

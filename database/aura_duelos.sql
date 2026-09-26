@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS jugadores (
     email VARCHAR(190) NULL,
     password_hash VARCHAR(255) NULL,
     es_admin TINYINT(1) NOT NULL DEFAULT 0,
+    avatar_url VARCHAR(500) NULL,
     aura_actual INT UNSIGNED NOT NULL DEFAULT 1000,
     aura_max INT UNSIGNED NOT NULL DEFAULT 1000,
     auracoins BIGINT UNSIGNED NOT NULL DEFAULT 0,
@@ -75,6 +76,19 @@ SET @sql := (
     WHERE TABLE_SCHEMA = 'aura_duelos'
       AND TABLE_NAME = 'jugadores'
       AND COLUMN_NAME = 'eliminado_en'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE jugadores ADD COLUMN avatar_url VARCHAR(500) NULL AFTER es_admin',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = 'aura_duelos'
+      AND TABLE_NAME = 'jugadores'
+      AND COLUMN_NAME = 'avatar_url'
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
@@ -174,10 +188,15 @@ INSERT INTO jugadores (
      0, 1000, 1000, 1200, 0, 0),
     (4, 'duelista_pro', 'vkwxq.pro@inbox.testmail.app',
      '$2y$10$fVmB46HBUvzW56oQA/QoD.NCo./vOk80.vRl26mfy5egZbOEycx/S',
-     0, 1000, 1000, 800, 0, 0)
+     0, 1000, 1000, 800, 0, 0),
+    (5, 'El Michi Supremo', NULL, NULL, 0, 6666, 6666, 999999, 0, 0),
+    (6, 'byron', 'byrongonzalez.calquin@gmail.com',
+     '$2y$10$93xnV0ES5Ru6PdoeeCX/ke6vuJ950GYXzt.rftdpe7651sEEImB4S',
+     1, 1000, 1000, 5000, 0, 0)
 ON DUPLICATE KEY UPDATE
     username = VALUES(username),
     email = VALUES(email),
+    es_admin = VALUES(es_admin),
     aura_max = VALUES(aura_max);
 
 -- Cartas: gatos realmente virales en TikTok LATAM.
@@ -195,7 +214,12 @@ INSERT INTO cartas_meme (
     (3, 'Big Floppa', 285, 150, 67, 'ROBAR_AURA', '/img/cartas/floppa.jpg'),
     (4, 'Smudge de la Mesa', 165, 300, 34, 'ESCUDO_CHILL', '/img/cartas/smudge.jpg'),
     (5, 'Michi Llorón', 145, 360, 45, 'ESCUDO_CHILL', '/img/cartas/lloron.jpg'),
-    (6, 'Beluga Atómico', 250, 120, 31, 'CRITICO_MEME', '/img/cartas/beluga.png')
+    (6, 'Beluga Atómico', 250, 120, 31, 'CRITICO_MEME', '/img/cartas/beluga.png'),
+    (7, 'Puño Divino del Supremo', 777, 500, 67, 'CRITICO_MEME', '/img/cartas/boss.png'),
+    (8, 'Patada Giratoria 360', 666, 450, 67, 'ROBAR_AURA', '/img/cartas/boss.png'),
+    (9, 'Mirada del Juicio Final', 700, 600, 67, 'ESCUDO_CHILL', '/img/cartas/boss.png'),
+    (10, 'Michi Suplicante', 205, 260, 50, 'ESCUDO_CHILL', '/img/cartas/suplicante.png'),
+    (11, 'Michi Sospechoso', 275, 140, 55, 'CRITICO_MEME', '/img/cartas/sospechoso.png')
 ON DUPLICATE KEY UPDATE
     nombre = VALUES(nombre),
     ataque_aura = VALUES(ataque_aura),
@@ -205,23 +229,33 @@ ON DUPLICATE KEY UPDATE
     imagen_url = VALUES(imagen_url);
 
 INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
-SELECT 1, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
+SELECT 1, id FROM cartas_meme WHERE id BETWEEN 1 AND 6 OR id BETWEEN 10 AND 11;
 
 INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
 SELECT 2, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
 
 INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
-SELECT 3, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
+SELECT 3, id FROM cartas_meme WHERE id BETWEEN 1 AND 6 OR id BETWEEN 10 AND 11;
 
 INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
-SELECT 4, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
+SELECT 4, id FROM cartas_meme WHERE id BETWEEN 1 AND 6 OR id BETWEEN 10 AND 11;
+
+INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
+SELECT 5, id FROM cartas_meme WHERE id BETWEEN 7 AND 9;
+
+INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
+SELECT 6, id FROM cartas_meme WHERE id BETWEEN 1 AND 6 OR id BETWEEN 10 AND 11;
+
+UPDATE jugadores SET avatar_url = '/img/cartas/byron.png' WHERE id = 6;
 
 DROP PROCEDURE IF EXISTS sp_iniciar_duelo_meme;
+DROP PROCEDURE IF EXISTS sp_iniciar_duelo_jefe;
 DROP PROCEDURE IF EXISTS sp_jugar_carta_turno;
 DROP PROCEDURE IF EXISTS sp_admin_actualizar_jugador;
 DROP PROCEDURE IF EXISTS sp_eliminar_jugador_logico;
 DROP PROCEDURE IF EXISTS sp_generar_codigo_recuperacion;
 DROP PROCEDURE IF EXISTS sp_canjear_codigo_recuperacion;
+DROP PROCEDURE IF EXISTS sp_registrar_jugador;
 
 DELIMITER $$
 
@@ -314,6 +348,105 @@ BEGIN
         'BATALLANDO' AS estado,
         LEAST(v_aura_actual, v_aura_max) AS aura_retador,
         1000 AS aura_oponente,
+        p_apuesta_auracoins AS auracoins_apuesta,
+        v_saldo - p_apuesta_auracoins AS auracoins_saldo;
+END$$
+
+CREATE PROCEDURE sp_iniciar_duelo_jefe(
+    IN p_jugador_id INT,
+    IN p_apuesta_auracoins INT
+)
+BEGIN
+    DECLARE v_jugador_existe INT DEFAULT 0;
+    DECLARE v_jefe_id INT UNSIGNED;
+    DECLARE v_aura_jefe INT UNSIGNED;
+    DECLARE v_saldo BIGINT UNSIGNED;
+    DECLARE v_aura_actual INT UNSIGNED;
+    DECLARE v_aura_max INT UNSIGNED;
+    DECLARE v_duelo_id INT UNSIGNED;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    IF p_apuesta_auracoins IS NULL OR p_apuesta_auracoins <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La apuesta debe ser mayor que cero';
+    END IF;
+
+    START TRANSACTION;
+
+    SELECT COUNT(*)
+    INTO v_jugador_existe
+    FROM jugadores
+    WHERE id = p_jugador_id
+      AND eliminado_en IS NULL;
+
+    IF v_jugador_existe = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Jugador no encontrado';
+    END IF;
+
+    SELECT auracoins, aura_actual, aura_max
+    INTO v_saldo, v_aura_actual, v_aura_max
+    FROM jugadores
+    WHERE id = p_jugador_id
+    FOR UPDATE;
+
+    IF v_aura_actual = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Tu Aura permanente está en cero';
+    END IF;
+
+    IF v_saldo < p_apuesta_auracoins THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'AuraCoins insuficientes para esta apuesta';
+    END IF;
+
+    SELECT id, aura_max
+    INTO v_jefe_id, v_aura_jefe
+    FROM jugadores
+    WHERE username = 'El Michi Supremo'
+    LIMIT 1;
+
+    IF v_jefe_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El Michi Supremo aún no despierta';
+    END IF;
+
+    UPDATE jugadores
+    SET auracoins = auracoins - p_apuesta_auracoins
+    WHERE id = p_jugador_id;
+
+    INSERT INTO duelos_activos (
+        retador_id,
+        oponente_bot_id,
+        aura_retador,
+        aura_oponente,
+        auracoins_apuesta,
+        turno,
+        estado
+    ) VALUES (
+        p_jugador_id,
+        v_jefe_id,
+        LEAST(v_aura_actual, v_aura_max),
+        v_aura_jefe,
+        p_apuesta_auracoins,
+        1,
+        'BATALLANDO'
+    );
+
+    SET v_duelo_id = LAST_INSERT_ID();
+
+    COMMIT;
+
+    SELECT
+        v_duelo_id AS duelo_id,
+        'BATALLANDO' AS estado,
+        LEAST(v_aura_actual, v_aura_max) AS aura_retador,
+        v_aura_jefe AS aura_oponente,
         p_apuesta_auracoins AS auracoins_apuesta,
         v_saldo - p_apuesta_auracoins AS auracoins_saldo;
 END$$
@@ -826,6 +959,78 @@ BEGIN
     COMMIT;
 
     SELECT v_jugador_id AS jugador_id, 'CLAVE_ACTUALIZADA' AS estado;
+END$$
+
+CREATE PROCEDURE sp_registrar_jugador(
+    IN p_username VARCHAR(80),
+    IN p_email VARCHAR(190),
+    IN p_password_hash VARCHAR(255)
+)
+BEGIN
+    DECLARE v_ocupado INT DEFAULT 0;
+    DECLARE v_jugador_id INT UNSIGNED;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    SET p_username = TRIM(p_username);
+    SET p_email = NULLIF(TRIM(LOWER(p_email)), '');
+
+    IF p_username IS NULL OR CHAR_LENGTH(p_username) < 3 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'El michi necesita un nombre de al menos 3 letras';
+    END IF;
+
+    IF p_email IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Necesitas un correo para tu Aura';
+    END IF;
+
+    IF p_password_hash IS NULL OR CHAR_LENGTH(p_password_hash) = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Falta la clave';
+    END IF;
+
+    SELECT COUNT(*)
+    INTO v_ocupado
+    FROM jugadores
+    WHERE username = p_username
+       OR email = p_email;
+
+    IF v_ocupado > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Ese nombre o correo ya está ocupado por otro michi';
+    END IF;
+
+    START TRANSACTION;
+
+    INSERT INTO jugadores (
+        username, email, password_hash, es_admin,
+        aura_actual, aura_max, auracoins, victorias, derrotas
+    ) VALUES (
+        p_username, p_email, p_password_hash, 0,
+        1000, 1000, 1500, 0, 0
+    );
+
+    SET v_jugador_id = LAST_INSERT_ID();
+
+    INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
+    SELECT v_jugador_id, id
+    FROM cartas_meme
+    WHERE id BETWEEN 1 AND 6 OR id BETWEEN 10 AND 11;
+
+    COMMIT;
+
+    SELECT
+        v_jugador_id AS jugador_id,
+        p_username AS username,
+        p_email AS email,
+        1000 AS aura_actual,
+        1000 AS aura_max,
+        1500 AS auracoins;
 END$$
 
 DELIMITER ;

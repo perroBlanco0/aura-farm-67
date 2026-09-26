@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Entrar · Michi Arena</title>
+    <title>Crear cuenta · Michi Arena</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
@@ -30,40 +30,41 @@
         .form-card h2 { margin: 0 0 4px; font-size: 1.4rem; font-weight: 600; color: var(--ink); }
         .form-card .sub { color: var(--muted); font-size: .85rem; font-weight: 700; margin-bottom: 6px; }
         .form-card button { margin-top: 24px; width: 100%; }
-        .links { margin-top: 20px; display: flex; justify-content: center; font-size: .85rem; }
+        .links { margin-top: 20px; display: flex; justify-content: center; gap: 18px; font-size: .85rem; }
         .links a { color: var(--sky-1); text-decoration: none; font-weight: 900; }
         .links a:hover { text-decoration: underline; }
-        .demo-hint { margin-top: 16px; color: var(--muted); font-size: .75rem; text-align: center; font-weight: 700; }
-        .demo-hint code { color: #b87400; background: #fff3cf; border-radius: 7px; padding: 2px 7px; }
+        .hint { margin-top: 16px; color: var(--muted); font-size: .75rem; text-align: center; font-weight: 700; }
     </style>
 </head>
 <body>
 <main class="splash">
     <img class="mascot" src="/img/cartas/michi.jpg" alt="Michi, la mascota de la arena">
     <h1 class="logo">MICHI <span>ARENA</span></h1>
-    <p class="tagline">Atrapa michis virales, apuesta Aura y gana el pozo.</p>
+    <p class="tagline">Crea tu cuenta y recibe tu correo de bienvenida.</p>
 
     <div class="card form-card">
-        <h2>ENTRA A LA ARENA</h2>
-        <p class="sub">Duelos de gatos virales y apuestas de Aura.</p>
+        <h2>ÚNETE A LA ARENA</h2>
+        <p class="sub">Empiezas con 1000 de Aura, 1500 AuraCoins y 8 michis.</p>
 
         <?php if (! empty($error)): ?><p class="error"><?= esc($error) ?></p><?php endif ?>
-        <?php if (! empty($ok)): ?><p class="ok"><?= esc($ok) ?></p><?php endif ?>
 
-        <form action="<?= site_url('login') ?>" method="post">
+        <form action="<?= site_url('registro') ?>" method="post">
             <?= csrf_field() ?>
-            <label for="username">USUARIO</label>
-            <input id="username" name="username" required autocomplete="username" autofocus>
+            <label for="username">NOMBRE DE MICHI</label>
+            <input id="username" name="username" required minlength="3" maxlength="80" autocomplete="username" autofocus>
+            <label for="email">CORREO</label>
+            <input id="email" name="email" type="email" required autocomplete="email">
             <label for="clave">CLAVE</label>
-            <input id="clave" name="clave" type="password" required autocomplete="current-password">
-            <button type="submit">ENTRAR A DUELAR</button>
+            <input id="clave" name="clave" type="password" required minlength="6" autocomplete="new-password">
+            <label for="clave2">REPITE LA CLAVE</label>
+            <input id="clave2" name="clave2" type="password" required minlength="6" autocomplete="new-password">
+            <button type="submit">CREAR MI MICHI</button>
         </form>
 
         <div class="links">
-            <a href="<?= site_url('recuperar') ?>">Olvidé mi clave</a>
-            <a href="<?= site_url('registro') ?>" style="margin-left:18px">Crear cuenta</a>
+            <a href="<?= site_url('login') ?>">Ya tengo cuenta</a>
         </div>
-        <p class="demo-hint">Demo: <code>demo</code> / <code>nirvana</code></p>
+        <p class="hint">Te mandaremos un correo de bienvenida con tu link de acceso.</p>
     </div>
 </main>
 
@@ -72,9 +73,6 @@
 <script>
 <?php if (! empty($error)): ?>
 MichiToast.fire({ icon: 'error', title: <?= json_encode((string) $error, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
-<?php endif ?>
-<?php if (! empty($ok)): ?>
-MichiToast.fire({ icon: 'success', title: <?= json_encode((string) $ok, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
 <?php endif ?>
 </script>
 </body>
