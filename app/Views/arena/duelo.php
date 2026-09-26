@@ -17,6 +17,13 @@
             position: relative; z-index: 1;
         }
         .opponent, .board, .hand { width: 100%; min-width: 0; max-width: 100%; }
+        .btn-mapa {
+            position: fixed; top: calc(env(safe-area-inset-top, 0px) + 12px); right: 14px; z-index: 60;
+            display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px;
+            border-radius: 999px; background: rgba(255,255,255,.92); color: var(--ink);
+            font: 800 .72rem Inter, sans-serif; text-decoration: none; letter-spacing: .04em;
+            box-shadow: var(--shadow-lg, 0 10px 30px rgba(0,0,0,.25));
+        }
         .opponent { padding: 18px clamp(16px, 4vw, 54px); }
         .opponent-inner, .board-inner, .hand-inner { width: min(1280px, 100%); min-width: 0; margin: 0 auto; }
         .opponent-inner {
@@ -296,11 +303,12 @@
 </head>
 <body>
 <main class="arena">
+    <a class="btn-mapa" href="<?= site_url('mapa') ?>">← MAPA</a>
     <section class="opponent">
         <div class="opponent-inner">
-            <img class="avatar" src="/img/cartas/bot.gif" alt="">
+            <img class="avatar" src="<?= esc($duelo['carta_rival_img'] ?? '/img/cartas/bot.gif') ?>" alt="">
             <div class="identity">
-                <small>RIVAL MICHI</small>
+                <small><?= $duelo['carta_rival_id'] ? 'MICHI SALVAJE' : 'RIVAL MICHI' ?></small>
                 <h1><?= esc($duelo['bot_nombre']) ?></h1>
             </div>
             <div class="aura-panel">
@@ -336,7 +344,7 @@
             <aside class="feed">
                 <div class="feed-title">FEED DEL COMBATE</div>
                 <div id="battle-log">
-                    <div class="log-entry">Apuesta retenida: <strong><?= esc(formatear_auracoins((int) $duelo['auracoins_apuesta'])) ?></strong>.</div>
+                    <div class="log-entry">Apuesta retenida: <strong><?= esc(str_replace('$AURA', '$MICHI', formatear_auracoins((int) $duelo['auracoins_apuesta']))) ?></strong>. Ganas → cobras el doble.</div>
                     <div class="log-entry"><?= esc($duelo['bot_nombre']) ?> entró a la arena. Elige una carta para comenzar.</div>
                 </div>
             </aside>
@@ -357,7 +365,7 @@
                     </div>
                     <div class="bar"><div id="player-bar" class="bar-fill" style="width: <?= calcular_barra_aura((int) $duelo['aura_retador'], (int) $duelo['aura_max_retador']) ?>%"></div></div>
                 </div>
-                <div id="wallet" class="wallet"><?= esc(formatear_auracoins((int) $duelo['auracoins'])) ?></div>
+                <div id="wallet" class="wallet"><?= esc(str_replace('$AURA', '$MICHI', formatear_auracoins((int) $duelo['auracoins']))) ?></div>
             </div>
 
             <div class="cards">
@@ -371,9 +379,12 @@
                                 <span class="stat"><b><?= esc($carta['ataque_aura']) ?></b>⚔️ ATAQUE</span>
                                 <span class="stat"><b><?= esc($carta['defensa_cringe']) ?></b>🛡️ ANTI-CRINGE</span>
                             </div>
-                            <p class="effect"><?= esc(str_replace('_', ' ', $carta['efecto_especial'])) ?></p>
+                            <p class="effect" title="<?= esc(efecto_descripcion($carta['efecto_especial'])) ?>">
+                                <?= esc(str_replace('_', ' ', $carta['efecto_especial'])) ?>
+                                <small><?= esc(efecto_descripcion($carta['efecto_especial'])) ?></small>
+                            </p>
                             <button class="play-card" type="button" data-card-id="<?= esc($carta['id']) ?>" <?= $duelo['estado'] !== 'BATALLANDO' ? 'disabled' : '' ?>>
-                                TIRAR CARTA
+                                JUGAR CARTA
                             </button>
                         </div>
                     </article>
@@ -397,7 +408,7 @@ const buttons = [...document.querySelectorAll('.play-card')];
 const battleLog = document.getElementById('battle-log');
 const stage = document.getElementById('stage');
 const cardImages = <?= json_encode(array_column($mazo, 'imagen_url', 'nombre'), JSON_UNESCAPED_SLASHES) ?>;
-const botCardFallback = <?= json_encode(base_url('img/cartas/bot.gif')) ?>;
+const botCardFallback = <?= json_encode($duelo['carta_rival_img'] ?? base_url('img/cartas/bot.gif')) ?>;
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const arenaEl = document.querySelector('.arena');
 const flashOverlay = document.getElementById('flash-overlay');
@@ -411,7 +422,7 @@ let lastPlayStartedAt = 0;
 
 const formatCoins = (amount) => {
     const sign = amount < 0 ? '-' : amount > 0 ? '+' : '';
-    return `💰 ${sign}${Math.abs(amount).toLocaleString('es-CL')} $AURA`;
+    return `💰 ${sign}${Math.abs(amount).toLocaleString('es-CL')} $MICHI`;
 };
 
 const updateAura = (side, value, max) => {
@@ -710,7 +721,7 @@ const addLog = (html, isError = false) => {
 const setBusy = (busy) => {
     buttons.forEach((button) => {
         button.disabled = busy;
-        button.textContent = busy ? 'CALCULANDO AURA…' : 'TIRAR CARTA';
+        button.textContent = busy ? 'CALCULANDO…' : 'JUGAR CARTA';
     });
 };
 
@@ -721,7 +732,9 @@ const showResult = (data) => {
         title: won ? '¡W ABSOLUTA!' : 'CRINGE TOTAL',
         html: `<p style="margin:0 0 10px">${michiEscapeHtml(data.frase_resultado)}</p>`
             + `<strong style="font-family:Fredoka,sans-serif;font-size:1.1rem;color:${won ? '#4d7a00' : '#c23045'}">`
-            + `${won ? 'Pozo cobrado' : 'Apuesta perdida'}: ${michiEscapeHtml(formatCoins(data.auracoins_movimiento))}</strong>`,
+            + `${won ? 'Pozo cobrado' : 'Apuesta perdida'}: ${michiEscapeHtml(formatCoins(data.auracoins_movimiento))}</strong>`
+            + (data.carta_rival ? `<p style="margin:12px 0 0;font-weight:800;color:#4d7a00">🐾 ¡ATRAPASTE A ${michiEscapeHtml(data.carta_rival)}! Ya está en tu mazo.</p>` : '')
+            + (won ? '' : '<p style="margin:12px 0 0;font-weight:700;color:#c23045">Tu Aura permanente bajó 100 puntos.</p>'),
         confirmButtonText: 'VOLVER AL MAPA',
         allowOutsideClick: false,
         allowEscapeKey: false,

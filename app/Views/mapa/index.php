@@ -365,7 +365,7 @@
         <span>MICHI ARENA</span>
     </div>
     <div class="hud-nav">
-        <div class="balance"><?= esc(formatear_auracoins((int) $jugador['auracoins'])) ?></div>
+        <div class="balance"><?= esc(str_replace('$AURA', '$MICHI', formatear_auracoins((int) $jugador['auracoins']))) ?></div>
         <a href="<?= site_url('arena') ?>">Arena</a>
         <?php if (! empty($es_admin)): ?>
             <a href="<?= site_url('mantenedor') ?>">Mantenedor</a>
@@ -380,6 +380,10 @@
 
 <div class="chip-ubicacion" id="chipUbicacion">📍 Buscando tu ubicación…</div>
 
+<div class="chip-ubicacion" id="chipLeyenda" style="bottom:calc(env(safe-area-inset-bottom, 0px) + 78px)">
+    🟢 tú · 🔵 michi salvaje · 🔴 jefe final
+</div>
+
 <button class="btn-rescan" id="btnRescan" type="button">
     <span class="radar">🛰️</span> RESCANEAR
 </button>
@@ -387,6 +391,7 @@
 <form id="formDuelo" action="<?= site_url('arena/iniciar') ?>" method="post" style="display:none">
     <?= csrf_field() ?>
     <input type="hidden" name="apuesta" id="inputApuesta" value="">
+    <input type="hidden" name="carta_id" id="inputCartaId" value="">
 </form>
 
 <form id="formJefe" action="<?= site_url('arena/jefe') ?>" method="post" style="display:none">
@@ -424,6 +429,7 @@
 <script>
     const CARTAS = <?= json_encode(array_map(static function (array $carta): array {
         return [
+            'id'     => (int) $carta['id'],
             'nombre' => $carta['nombre'],
             'imagen' => $carta['imagen_url'],
             'lvl'    => (int) $carta['rareza_nivel'],
@@ -432,6 +438,7 @@
         ];
     }, $mazo ?? []), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     const AURACOINS = <?= (int) $jugador['auracoins'] ?>;
+    const MAZO_IDS = new Set(<?= json_encode($mazo_ids ?? []) ?>);
     const AVATAR_JUGADOR = <?= json_encode($jugador['avatar_url'] ?? '/img/cartas/michi.jpg') ?>;
     const APUESTAS = [100, 250, 500, 1000, 2000];
     const CENTRO_FALLBACK = [-33.4489, -70.6693];
@@ -491,7 +498,7 @@
 
     function opcionesApuesta() {
         return APUESTAS.map(v =>
-            `<option value="${v}" ${v > AURACOINS ? 'disabled' : ''}>💰 ${v.toLocaleString('es-CL')} $AURA</option>`
+            `<option value="${v}" ${v > AURACOINS ? 'disabled' : ''}>💰 ${v.toLocaleString('es-CL')} $MICHI</option>`
         ).join('');
     }
 
@@ -508,6 +515,7 @@
                     <span class="stat-michi atk">⚔ ${carta.atk}</span>
                     <span class="stat-michi def">🛡 ${carta.def}</span>
                 </div>
+                ${MAZO_IDS.has(carta.id) ? '' : '<p style="margin:10px 0 0;color:#b8ff36;font-weight:800;font-size:.75rem;letter-spacing:.08em">🐾 SIN ATRAPAR — GANA Y ES TUYO</p>'}
                 <select id="selApuesta" class="select-apuesta">${opcionesApuesta()}</select>
             `,
             showCancelButton: true,
@@ -518,7 +526,7 @@
                 const sel = document.getElementById('selApuesta');
                 const valor = parseInt(sel.value, 10);
                 if (! valor || valor > AURACOINS) {
-                    Swal.showValidationMessage('No te alcanzan los AuraCoins para esa apuesta.');
+                    Swal.showValidationMessage('No te alcanzan los $MICHI para esa apuesta.');
                     return false;
                 }
                 return valor;
@@ -526,6 +534,7 @@
         }).then(result => {
             if (result.isConfirmed) {
                 document.getElementById('inputApuesta').value = result.value;
+                document.getElementById('inputCartaId').value = carta.id || '';
                 document.getElementById('formDuelo').submit();
             }
         });
@@ -635,7 +644,7 @@
     document.getElementById('btnDesafiarJefe').addEventListener('click', () => {
         const valor = parseInt(document.getElementById('selApuestaJefe').value, 10);
         if (! valor || valor > AURACOINS) {
-            Swal.fire({ title: 'SIN AURACOINS', text: 'No te alcanzan los AuraCoins para esa apuesta.', icon: 'warning' });
+            Swal.fire({ title: 'SIN $MICHI', text: 'No te alcanzan los $MICHI para esa apuesta.', icon: 'warning' });
             return;
         }
         document.getElementById('inputApuestaJefe').value = valor;
@@ -651,6 +660,13 @@
         btn.classList.add('girando');
         setTimeout(() => btn.classList.remove('girando'), 650);
         spawnear(centroActual());
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true, position: 'top', icon: 'success',
+                title: `✨ ${NUM_SPAWNS} michis detectados cerca`,
+                showConfirmButton: false, timer: 1800,
+            });
+        }
     });
 
     spawnear(mapa.getCenter());

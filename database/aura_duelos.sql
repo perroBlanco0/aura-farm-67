@@ -135,6 +135,8 @@ CREATE TABLE IF NOT EXISTS duelos_activos (
     oponente_bot_id INT UNSIGNED NOT NULL,
     aura_retador INT UNSIGNED NOT NULL,
     aura_oponente INT UNSIGNED NOT NULL DEFAULT 1000,
+    aura_max_oponente INT UNSIGNED NOT NULL DEFAULT 1000,
+    carta_rival_id INT UNSIGNED NULL,
     auracoins_apuesta INT UNSIGNED NOT NULL,
     turno INT UNSIGNED NOT NULL DEFAULT 1,
     estado ENUM(
@@ -148,8 +150,49 @@ CREATE TABLE IF NOT EXISTS duelos_activos (
     CONSTRAINT fk_duelos_retador
         FOREIGN KEY (retador_id) REFERENCES jugadores (id),
     CONSTRAINT fk_duelos_bot
-        FOREIGN KEY (oponente_bot_id) REFERENCES jugadores (id)
+        FOREIGN KEY (oponente_bot_id) REFERENCES jugadores (id),
+    CONSTRAINT fk_duelos_carta_rival
+        FOREIGN KEY (carta_rival_id) REFERENCES cartas_meme (id)
 ) ENGINE=InnoDB;
+
+SET @sql := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE duelos_activos ADD COLUMN aura_max_oponente INT UNSIGNED NOT NULL DEFAULT 1000 AFTER aura_oponente',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = 'aura_duelos'
+      AND TABLE_NAME = 'duelos_activos'
+      AND COLUMN_NAME = 'aura_max_oponente'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE duelos_activos ADD COLUMN carta_rival_id INT UNSIGNED NULL AFTER aura_max_oponente',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = 'aura_duelos'
+      AND TABLE_NAME = 'duelos_activos'
+      AND COLUMN_NAME = 'carta_rival_id'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE duelos_activos ADD CONSTRAINT fk_duelos_carta_rival FOREIGN KEY (carta_rival_id) REFERENCES cartas_meme (id)',
+        'SELECT 1'
+    )
+    FROM information_schema.TABLE_CONSTRAINTS
+    WHERE TABLE_SCHEMA = 'aura_duelos'
+      AND TABLE_NAME = 'duelos_activos'
+      AND CONSTRAINT_NAME = 'fk_duelos_carta_rival'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 CREATE TABLE IF NOT EXISTS recuperacion_codigos (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -229,27 +272,28 @@ ON DUPLICATE KEY UPDATE
     imagen_url = VALUES(imagen_url);
 
 INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
-SELECT 1, id FROM cartas_meme WHERE id BETWEEN 1 AND 6 OR id BETWEEN 10 AND 11;
+SELECT 1, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
 
 INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
 SELECT 2, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
 
 INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
-SELECT 3, id FROM cartas_meme WHERE id BETWEEN 1 AND 6 OR id BETWEEN 10 AND 11;
+SELECT 3, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
 
 INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
-SELECT 4, id FROM cartas_meme WHERE id BETWEEN 1 AND 6 OR id BETWEEN 10 AND 11;
+SELECT 4, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
 
 INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
 SELECT 5, id FROM cartas_meme WHERE id BETWEEN 7 AND 9;
 
 INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
-SELECT 6, id FROM cartas_meme WHERE id BETWEEN 1 AND 6 OR id BETWEEN 10 AND 11;
+SELECT 6, id FROM cartas_meme WHERE id BETWEEN 1 AND 6;
 
 UPDATE jugadores SET avatar_url = '/img/cartas/byron.png' WHERE id = 6;
 
 DROP PROCEDURE IF EXISTS sp_iniciar_duelo_meme;
 DROP PROCEDURE IF EXISTS sp_iniciar_duelo_jefe;
+DROP PROCEDURE IF EXISTS sp_iniciar_duelo_michi;
 DROP PROCEDURE IF EXISTS sp_jugar_carta_turno;
 DROP PROCEDURE IF EXISTS sp_admin_actualizar_jugador;
 DROP PROCEDURE IF EXISTS sp_eliminar_jugador_logico;
@@ -326,6 +370,7 @@ BEGIN
         oponente_bot_id,
         aura_retador,
         aura_oponente,
+        aura_max_oponente,
         auracoins_apuesta,
         turno,
         estado
@@ -333,6 +378,7 @@ BEGIN
         p_jugador_id,
         v_bot_id,
         LEAST(v_aura_actual, v_aura_max),
+        1000,
         1000,
         p_apuesta_auracoins,
         1,
@@ -425,6 +471,7 @@ BEGIN
         oponente_bot_id,
         aura_retador,
         aura_oponente,
+        aura_max_oponente,
         auracoins_apuesta,
         turno,
         estado
@@ -432,6 +479,7 @@ BEGIN
         p_jugador_id,
         v_jefe_id,
         LEAST(v_aura_actual, v_aura_max),
+        v_aura_jefe,
         v_aura_jefe,
         p_apuesta_auracoins,
         1,
@@ -451,6 +499,116 @@ BEGIN
         v_saldo - p_apuesta_auracoins AS auracoins_saldo;
 END$$
 
+CREATE PROCEDURE sp_iniciar_duelo_michi(
+    IN p_jugador_id INT,
+    IN p_apuesta_auracoins INT,
+    IN p_carta_rival_id INT
+)
+BEGIN
+    DECLARE v_jugador_existe INT DEFAULT 0;
+    DECLARE v_bot_id INT UNSIGNED;
+    DECLARE v_aura_rival INT UNSIGNED DEFAULT 0;
+    DECLARE v_saldo BIGINT UNSIGNED;
+    DECLARE v_aura_actual INT UNSIGNED;
+    DECLARE v_aura_max INT UNSIGNED;
+    DECLARE v_duelo_id INT UNSIGNED;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    IF p_apuesta_auracoins IS NULL OR p_apuesta_auracoins <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'La apuesta debe ser mayor que cero';
+    END IF;
+
+    START TRANSACTION;
+
+    SELECT COUNT(*)
+    INTO v_jugador_existe
+    FROM jugadores
+    WHERE id = p_jugador_id
+      AND eliminado_en IS NULL;
+
+    IF v_jugador_existe = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Jugador no encontrado';
+    END IF;
+
+    SELECT auracoins, aura_actual, aura_max
+    INTO v_saldo, v_aura_actual, v_aura_max
+    FROM jugadores
+    WHERE id = p_jugador_id
+    FOR UPDATE;
+
+    IF v_aura_actual = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Tu Aura permanente está en cero';
+    END IF;
+
+    IF v_saldo < p_apuesta_auracoins THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'AuraCoins insuficientes para esta apuesta';
+    END IF;
+
+    -- El michi salvaje que tocaste ES el rival: su Aura viene de su rareza y defensa.
+    SELECT 600 + rareza_nivel * 20 + FLOOR(defensa_cringe / 5)
+    INTO v_aura_rival
+    FROM cartas_meme
+    WHERE id = p_carta_rival_id;
+
+    IF v_aura_rival IS NULL OR v_aura_rival = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Ese michi salvaje huyó antes del combate';
+    END IF;
+
+    SELECT id
+    INTO v_bot_id
+    FROM jugadores
+    WHERE username = 'Michi Aburrido Bot'
+    LIMIT 1;
+
+    UPDATE jugadores
+    SET auracoins = auracoins - p_apuesta_auracoins
+    WHERE id = p_jugador_id;
+
+    INSERT INTO duelos_activos (
+        retador_id,
+        oponente_bot_id,
+        aura_retador,
+        aura_oponente,
+        aura_max_oponente,
+        carta_rival_id,
+        auracoins_apuesta,
+        turno,
+        estado
+    ) VALUES (
+        p_jugador_id,
+        v_bot_id,
+        LEAST(v_aura_actual, v_aura_max),
+        v_aura_rival,
+        v_aura_rival,
+        p_carta_rival_id,
+        p_apuesta_auracoins,
+        1,
+        'BATALLANDO'
+    );
+
+    SET v_duelo_id = LAST_INSERT_ID();
+
+    COMMIT;
+
+    SELECT
+        v_duelo_id AS duelo_id,
+        'BATALLANDO' AS estado,
+        LEAST(v_aura_actual, v_aura_max) AS aura_retador,
+        v_aura_rival AS aura_oponente,
+        p_apuesta_auracoins AS auracoins_apuesta,
+        v_saldo - p_apuesta_auracoins AS auracoins_saldo;
+END$$
+
 CREATE PROCEDURE sp_jugar_carta_turno(
     IN p_duelo_id INT,
     IN p_carta_id INT,
@@ -464,6 +622,8 @@ BEGIN
     DECLARE v_bot_id INT UNSIGNED;
     DECLARE v_aura_retador INT;
     DECLARE v_aura_oponente INT;
+    DECLARE v_aura_max_oponente INT;
+    DECLARE v_carta_rival_id INT UNSIGNED;
     DECLARE v_aura_max_retador INT;
     DECLARE v_apuesta INT UNSIGNED;
     DECLARE v_turno INT UNSIGNED;
@@ -508,6 +668,8 @@ BEGIN
         oponente_bot_id,
         aura_retador,
         aura_oponente,
+        aura_max_oponente,
+        carta_rival_id,
         auracoins_apuesta,
         turno,
         estado
@@ -516,6 +678,8 @@ BEGIN
         v_bot_id,
         v_aura_retador,
         v_aura_oponente,
+        v_aura_max_oponente,
+        v_carta_rival_id,
         v_apuesta,
         v_turno,
         v_estado
@@ -564,23 +728,41 @@ BEGIN
     FROM cartas_meme
     WHERE id = p_carta_id;
 
-    SELECT
-        c.nombre,
-        c.ataque_aura,
-        c.defensa_cringe,
-        c.rareza_nivel,
-        c.efecto_especial
-    INTO
-        v_bot_carta_nombre,
-        v_bot_ataque,
-        v_bot_defensa,
-        v_bot_rareza,
-        v_bot_efecto
-    FROM mazos_jugador AS m
-    INNER JOIN cartas_meme AS c ON c.id = m.carta_id
-    WHERE m.jugador_id = v_bot_id
-    ORDER BY RAND()
-    LIMIT 1;
+    -- Si el duelo es contra un michi salvaje, su carta rival es fija.
+    IF v_carta_rival_id IS NOT NULL THEN
+        SELECT
+            c.nombre,
+            c.ataque_aura,
+            c.defensa_cringe,
+            c.rareza_nivel,
+            c.efecto_especial
+        INTO
+            v_bot_carta_nombre,
+            v_bot_ataque,
+            v_bot_defensa,
+            v_bot_rareza,
+            v_bot_efecto
+        FROM cartas_meme AS c
+        WHERE c.id = v_carta_rival_id;
+    ELSE
+        SELECT
+            c.nombre,
+            c.ataque_aura,
+            c.defensa_cringe,
+            c.rareza_nivel,
+            c.efecto_especial
+        INTO
+            v_bot_carta_nombre,
+            v_bot_ataque,
+            v_bot_defensa,
+            v_bot_rareza,
+            v_bot_efecto
+        FROM mazos_jugador AS m
+        INNER JOIN cartas_meme AS c ON c.id = m.carta_id
+        WHERE m.jugador_id = v_bot_id
+        ORDER BY RAND()
+        LIMIT 1;
+    END IF;
 
     SELECT aura_max
     INTO v_aura_max_retador
@@ -627,6 +809,12 @@ BEGIN
             auracoins = auracoins + v_auracoins_movimiento,
             victorias = victorias + 1
         WHERE id = v_retador_id;
+
+        -- Vencer a un michi salvaje lo atrapa: entra a tu mazo.
+        IF v_carta_rival_id IS NOT NULL THEN
+            INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
+            VALUES (v_retador_id, v_carta_rival_id);
+        END IF;
     ELSE
         SET v_dano_recibido = GREATEST(
             50,
@@ -649,7 +837,7 @@ BEGIN
 
         IF v_bot_efecto = 'ROBAR_AURA' THEN
             SET v_aura_oponente = LEAST(
-                1000,
+                v_aura_max_oponente,
                 v_aura_oponente + FLOOR(v_dano_recibido * 0.25)
             );
         END IF;
@@ -710,6 +898,8 @@ BEGIN
         'auracoins_saldo', v_saldo,
         'efecto_jugador', v_efecto,
         'efecto_bot', v_bot_efecto,
+        'carta_rival_id', v_carta_rival_id,
+        'carta_rival', IF(v_carta_rival_id IS NOT NULL AND v_estado = 'VICTORIA_RETADOR', v_bot_carta_nombre, NULL),
         'frase', v_frase,
         'estado', v_estado
     ) AS resultado_json;
@@ -1017,10 +1207,12 @@ BEGIN
 
     SET v_jugador_id = LAST_INSERT_ID();
 
+    -- El mazo inicial trae las 6 cartas base; las cartas salvajes (10-11)
+    -- solo se consiguen atrapándolas al ganar su duelo en el mapa.
     INSERT IGNORE INTO mazos_jugador (jugador_id, carta_id)
     SELECT v_jugador_id, id
     FROM cartas_meme
-    WHERE id BETWEEN 1 AND 6 OR id BETWEEN 10 AND 11;
+    WHERE id BETWEEN 1 AND 6;
 
     COMMIT;
 

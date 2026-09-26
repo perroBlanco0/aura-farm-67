@@ -5,7 +5,7 @@ if (! function_exists('formatear_auracoins')) {
     {
         $signo = $monto < 0 ? '-' : '';
 
-        return '💰 ' . $signo . number_format(abs($monto), 0, ',', '.') . ' $AURA';
+        return '💰 ' . $signo . number_format(abs($monto), 0, ',', '.') . ' $MICHI';
     }
 }
 
@@ -58,5 +58,17 @@ if (! function_exists('frase_resultado_meme')) {
         $opciones = $frases[$estado] ?? ['La batalla de aura continúa.'];
 
         return $opciones[array_rand($opciones)];
+    }
+}
+
+if (! function_exists('efecto_descripcion')) {
+    function efecto_descripcion(string $efecto): string
+    {
+        return [
+            'CRITICO_MEME' => '×1.25 de daño al atacar',
+            'ROBAR_AURA'   => 'recuperas 25% del daño que haces',
+            'ESCUDO_CHILL' => 'recibes la mitad de daño',
+            'NINGUNO'      => 'sin efecto especial',
+        ][$efecto] ?? 'efecto misterioso';
     }
 }

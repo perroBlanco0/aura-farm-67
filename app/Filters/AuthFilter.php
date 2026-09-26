@@ -11,7 +11,7 @@ class AuthFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         if (! session()->get('jugador_id')) {
-            return redirect()->to('/login')->with('error', 'Inicia sesión para entrar a la arena.');
+            return redirect()->to('/login')->with('info', 'Inicia sesión para entrar a la arena.');
         }
 
         return null;

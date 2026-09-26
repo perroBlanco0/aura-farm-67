@@ -34,6 +34,19 @@ class ArenaModel extends Model
         return $resultado;
     }
 
+    public function crearDueloMichi(int $jugadorId, int $apuesta, int $cartaId): array
+    {
+        $query = $this->db->query(
+            'CALL sp_iniciar_duelo_michi(?, ?, ?)',
+            [$jugadorId, $apuesta, $cartaId]
+        );
+        $resultado = $query->getRowArray() ?? [];
+        $query->freeResult();
+        $this->limpiarResultadosProcedimiento();
+
+        return $resultado;
+    }
+
     public function lanzarCarta(int $dueloId, int $cartaId, int $turnoEsperado, int $jugadorId): array
     {
         $query = $this->db->query(
@@ -64,6 +77,15 @@ class ArenaModel extends Model
             ->getResultArray();
     }
 
+    public function obtenerCartasSalvajes(): array
+    {
+        return $this->db->table('cartas_meme')
+            ->select('id, nombre, ataque_aura, defensa_cringe, rareza_nivel, efecto_especial, imagen_url')
+            ->whereNotIn('id', [7, 8, 9])
+            ->get()
+            ->getResultArray();
+    }
+
     public function obtenerJugador(int $jugadorId): ?array
     {
         return $this->db->table('jugadores')
@@ -77,10 +99,12 @@ class ArenaModel extends Model
         return $this->db->table('duelos_activos AS d')
             ->select(
                 'd.*, r.username AS retador_nombre, r.aura_max AS aura_max_retador, '
-                . 'r.auracoins, b.username AS bot_nombre, b.aura_max AS aura_max_bot'
+                . 'r.auracoins, d.aura_max_oponente AS aura_max_bot, '
+                . 'COALESCE(cr.nombre, b.username) AS bot_nombre, cr.imagen_url AS carta_rival_img'
             )
             ->join('jugadores AS r', 'r.id = d.retador_id')
             ->join('jugadores AS b', 'b.id = d.oponente_bot_id')
+            ->join('cartas_meme AS cr', 'cr.id = d.carta_rival_id', 'left')
             ->where('d.id', $dueloId)
             ->get()
             ->getRowArray();

@@ -25,7 +25,8 @@ class Mapa extends BaseController
             'jugador' => $jugador,
             'es_admin' => (int) session()->get('es_admin') === 1,
             'error' => session()->getFlashdata('error'),
-            'mazo' => $arena->obtenerMazo($jugadorId),
+            'mazo' => $arena->obtenerCartasSalvajes(),
+            'mazo_ids' => array_map('intval', array_column($arena->obtenerMazo($jugadorId), 'id')),
         ]);
     }
 }
