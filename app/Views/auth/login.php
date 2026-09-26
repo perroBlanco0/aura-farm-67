@@ -45,9 +45,10 @@
         <h2>ENTRA A LA ARENA</h2>
         <p class="sub">Duelos de gatos virales y apuestas de $MICHI.</p>
 
-        <?php $esAviso = ! empty($error) && (stripos($error, 'inicia sesión') !== false || stripos($error, 'entrar') !== false); ?>
-        <?php if (! empty($error)): ?><p class="<?= $esAviso ? 'info' : 'error' ?>"><?= esc($error) ?></p><?php endif ?>
+        <?php $info = $info ?? session()->getFlashdata('info'); ?>
+        <?php if (! empty($error)): ?><p class="error"><?= esc($error) ?></p><?php endif ?>
         <?php if (! empty($ok)): ?><p class="ok"><?= esc($ok) ?></p><?php endif ?>
+        <?php if (! empty($info)): ?><p class="info"><?= esc($info) ?></p><?php endif ?>
 
         <form action="<?= site_url('login') ?>" method="post">
             <?= csrf_field() ?>
@@ -69,7 +70,10 @@
 <script src="/js/michi.js"></script>
 <script>
 <?php if (! empty($error)): ?>
-MichiToast.fire({ icon: '<?= $esAviso ? 'info' : 'error' ?>', title: <?= json_encode((string) $error, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
+MichiToast.fire({ icon: 'error', title: <?= json_encode((string) $error, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
+<?php endif ?>
+<?php if (! empty($info)): ?>
+MichiToast.fire({ icon: 'info', title: <?= json_encode((string) $info, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
 <?php endif ?>
 <?php if (! empty($ok)): ?>
 MichiToast.fire({ icon: 'success', title: <?= json_encode((string) $ok, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?> });
