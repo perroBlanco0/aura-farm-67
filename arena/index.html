@@ -92,7 +92,7 @@ document.getElementById('enter').onclick=()=>{
     else if(m.t==='s'){
       const seen=new Set();
       for(const[id,x,y,mm,d,mode]of m.cells){seen.add(id);
-        if(!cells[id])cells[id]={id,x,y,m:mm};
+        if(!cells[id])cells[id]={id,x,y,dx:x,dy:y,m:mm};
         cells[id].x=x;cells[id].y=y;cells[id].m=mm;cells[id].dead=!!d;cells[id].mode=mode;}
       for(const k of Object.keys(cells))if(!seen.has(+k))delete cells[k];
       if(m.ev)for(const ev of m.ev){
@@ -132,7 +132,7 @@ function draw(){
   if(now-lastFpsT>1000){fps=fpsN;fpsN=0;lastFpsT=now;document.getElementById('tfps').textContent=fps;}
   ctx.fillStyle='#0d1120';ctx.fillRect(0,0,innerWidth,innerHeight);
   let camX=W/2,camY=H/2;
-  if(me&&cells[me]){camX=cells[me].x;camY=cells[me].y;}
+  if(me&&cells[me]){camX=cells[me].dx!==undefined?cells[me].dx:cells[me].x;camY=cells[me].dy!==undefined?cells[me].dy:cells[me].y;}
   const ox=innerWidth/2-camX, oy=innerHeight/2-camY;
   // grid
   ctx.strokeStyle='rgba(120,140,190,.12)';ctx.lineWidth=1;
@@ -151,7 +151,9 @@ function draw(){
   const showSensors=document.getElementById('sensors').checked;
   const arr=Object.values(cells).sort((a,b)=>a.m-b.m);
   for(const c of arr){
-    const sx=c.x+ox,sy=c.y+oy,r=rad(c.m);
+    // interpolación: dibuja deslizando hacia la posición del server (suaviza 30Hz)
+    c.dx+=(c.x-c.dx)*0.25;c.dy+=(c.y-c.dy)*0.25;
+    const sx=c.dx+ox,sy=c.dy+oy,r=rad(c.m);
     if(sx<-r||sx>innerWidth+r||sy<-r||sy>innerHeight+r)continue;
     const mt=meta[c.id]||{name:'',color:'#888',kind:'bot'};
     if(showSensors&&mt.kind==='bot'&&!c.dead){
