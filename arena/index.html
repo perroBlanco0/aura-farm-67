@@ -104,8 +104,14 @@ document.getElementById('enter').onclick=()=>{
         else if(ev.t==='respawn'&&ev.i===me)dead=false;}
     }
   };
-  ws.onclose=()=>{document.getElementById('dead').textContent='CONEXIÓN PERDIDA';document.getElementById('dead').style.display='grid';};
+  ws.onclose=()=>{connLost=true;document.getElementById('dead').textContent=idleClosed?'PAUSADO POR INACTIVIDAD — click para volver':'CONEXIÓN PERDIDA — click para reintentar';document.getElementById('dead').style.display='grid';document.getElementById('dead').style.pointerEvents='auto';};
 };
+// auto-cierre por inactividad: una pestaña olvidada mantiene el WS vivo e impide
+// que Render free suspenda el servicio (15min sin tráfico)
+let lastAct=Date.now(),idleClosed=false,connLost=false;
+for(const ev of['mousemove','keydown','mousedown','touchstart'])addEventListener(ev,()=>{lastAct=Date.now();},{passive:true});
+setInterval(()=>{if(ws&&ws.readyState===1&&Date.now()-lastAct>240000){idleClosed=true;ws.close();}},20000);
+document.getElementById('dead').onclick=()=>{if(ws&&(ws.readyState===2||ws.readyState===3)){location.reload();}};
 // input: solo se envía el target del mouse
 let mx=innerWidth/2,my=innerHeight/2;
 addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
@@ -169,7 +175,7 @@ function draw(){
   }
   if(dead&&me){document.getElementById('dead').textContent='TE COMIERON — respawn…';
     document.getElementById('dead').style.display='grid';}
-  else document.getElementById('dead').style.display='none';
+  else if(!connLost)document.getElementById('dead').style.display='none';
   requestAnimationFrame(draw);
 }
 draw();
