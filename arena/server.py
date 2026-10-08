@@ -161,10 +161,12 @@ def bot_think(b):
     b["ty"] = b["y"] + vy / n * 200
 
 world_t = 0.0
+tick_n = 0
 
 def tick(dt):
-    global world_t
+    global world_t, tick_n
     world_t += dt
+    tick_n += 1
     # intención de movimiento
     for c in cells.values():
         if c["dead_t"]:
@@ -172,7 +174,9 @@ def tick(dt):
         # decaimiento de masa: frena la bola de nieve del que va ganando
         if c["m"] > 100:
             c["m"] -= c["m"] * 0.004 * dt
-        if c["kind"] == "bot":
+        # cada bot decide 1/5 de los ticks, escalonados: 4 consultas HDC/tick
+        # (suficiente: el modo cambia a 12Hz, imperceptible para el ojo)
+        if c["kind"] == "bot" and (tick_n + c["id"]) % 5 == 0:
             bot_think(c)
         dx, dy = c["tx"] - c["x"], c["ty"] - c["y"]
         d = math.hypot(dx, dy)
@@ -306,13 +310,15 @@ async def loop():
         t0 = time.perf_counter()
         tick(dt)
         if clients:
-            msg = json.dumps(snapshot(), separators=(",", ":"))
-            bytes_last[0] = len(msg)
-            for ws in list(clients):
-                try:
-                    await ws.send(msg)
-                except Exception:
-                    clients.pop(ws, None)
+            if tick_n % 2 == 0:   # broadcast 30Hz: mitad de ancho de banda
+                msg = json.dumps(snapshot(), separators=(",", ":"))
+                bytes_last[0] = len(msg)
+                for ws in list(clients):
+                    try:
+                        await ws.send(msg)
+                    except Exception:
+                        clients.pop(ws, None)
+            # tick impar: los eventos esperan al próximo broadcast (cola intacta)
         else:
             broadcast_queue.clear()
         tps_counter["n"] += 1
