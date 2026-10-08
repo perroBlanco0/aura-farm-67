@@ -31,6 +31,7 @@ VISION = 350.0
 EAT_RATIO = 1.2          # hay que ser 20% más grande para comer
 BOT_N = 20
 MAX_SPEED = 190.0        # px/s con masa mínima
+MAX_MASS = 600.0         # techo: radio ~196px — nadie cubre el mundo
 
 def radius(mass):  return 8.0 * math.sqrt(mass)        # agar: r ∝ sqrt(m)
 def speed(mass):   return MAX_SPEED * (mass ** -0.22)  # más grande = más lento
@@ -173,7 +174,9 @@ def tick(dt):
             continue
         # decaimiento de masa: frena la bola de nieve del que va ganando
         if c["m"] > 100:
-            c["m"] -= c["m"] * 0.004 * dt
+            c["m"] -= c["m"] * 0.006 * dt
+        if c["m"] > MAX_MASS:
+            c["m"] = MAX_MASS
         # cada bot decide 1/5 de los ticks, escalonados: 4 consultas HDC/tick
         # (suficiente: el modo cambia a 12Hz, imperceptible para el ojo)
         if c["kind"] == "bot" and (tick_n + c["id"]) % 5 == 0:
@@ -208,7 +211,7 @@ def tick(dt):
                 dx, dy = o["x"] - a["x"], o["y"] - a["y"]
                 if dx * dx + dy * dy < (ra * 0.72) ** 2:
                     o["dead_t"] = world_t
-                    a["m"] += o["m"] * 0.85
+                    a["m"] = min(a["m"] + o["m"] * 0.85, MAX_MASS)
                     broadcast_queue.append({"t": "dead", "i": o["id"],
                                             "by": a["id"]})
                     if o["kind"] == "player":
