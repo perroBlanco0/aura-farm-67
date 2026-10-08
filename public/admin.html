@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aura 67 · Panel de gobernanza</title>
+<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@600;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:26px; font-family:'Nunito',system-ui,sans-serif;
+    background:radial-gradient(circle at 20% 10%,#3b0764,#0f172a 60%); color:#fff; min-height:100vh; }
+  h1 { font-family:'Luckiest Guy',cursive; color:#fde047; margin:0 0 4px; }
+  .sub { opacity:.7; font-size:.85rem; margin-bottom:18px; }
+  .panel { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+    border-radius:18px; padding:18px; margin-bottom:18px; overflow:auto; }
+  input, button { font-family:inherit; font-size:1rem; border-radius:10px; border:none; padding:10px 12px; }
+  input { width:100%; max-width:320px; background:rgba(255,255,255,.1); color:#fff; margin:6px 0; }
+  button { font-weight:800; background:linear-gradient(90deg,#fde047,#f472b6); color:#1e1b4b; cursor:pointer; }
+  button.ghost { background:rgba(255,255,255,.14); color:#fff; }
+  table { width:100%; border-collapse:collapse; font-size:.85rem; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.1); white-space:nowrap; }
+  th { color:#fde047; font-size:.75rem; text-transform:uppercase; letter-spacing:.5px; }
+  .rol { background:rgba(255,255,255,.14); border-radius:999px; padding:3px 10px; font-size:.72rem; font-weight:800; }
+  .hidden { display:none; }
+  .tabs { display:flex; gap:8px; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<h1>Panel de gobernanza 🐱</h1>
+<p class="sub">Donaciones y bitácora de auditoría. El acceso lo decide tu rol en la base de datos (RLS).</p>
+
+<section id="login" class="panel">
+  <h2>Acceso</h2>
+  <input id="email" type="email" placeholder="tucorreo@ejemplo.com" />
+  <div>
+    <button id="btn-magic">Enviar enlace de acceso</button>
+  </div>
+  <p class="sub">Recibes un enlace mágico por correo; no hay contraseñas.</p>
+</section>
+
+<section id="app" class="panel hidden">
+  <div class="tabs">
+    <span>Sesión: <b id="quien"></b></span>
+    <span class="rol" id="mi-rol">—</span>
+    <button class="ghost" id="btn-salir">Salir</button>
+  </div>
+
+  <h2>Donaciones</h2>
+  <table id="t-donaciones"><thead><tr>
+    <th>ID</th><th>Nombre</th><th>Correo</th><th>Monto</th><th>Aura</th><th>Correo enviado</th><th>Fecha</th>
+  </tr></thead><tbody></tbody></table>
+
+  <h2 style="margin-top:24px">Auditoría</h2>
+  <table id="t-auditoria"><thead><tr>
+    <th>Evento</th><th>Actor</th><th>Recurso</th><th>ID</th><th>Fecha</th>
+  </tr></thead><tbody></tbody></table>
+</section>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { GOVERNANCE } from './governance.config.js';
+
+const SUPABASE_URL = 'https://xphrqwsoluwynfuckcpc.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_O9NMTq3NQxzlFnFEqgZsbA_wU2UQkK_';
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const $ = (id) => document.getElementById(id);
+const fecha = (v) => new Date(v).toLocaleString('es-CL');
+
+$('btn-magic').addEventListener('click', async () => {
+  const email = $('email').value.trim();
+  if (!email.includes('@')) return Swal.fire({ icon:'error', title:'Correo inválido' });
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
+  Swal.fire(error
+    ? { icon:'error', title:'No se pudo enviar', text:error.message }
+    : { icon:'success', title:'Revisa tu correo 📬', text:'Te mandamos el enlace de acceso.' });
+});
+
+$('btn-salir').addEventListener('click', async () => { await sb.auth.signOut(); location.reload(); });
+
+function pintar(tabla, filas, columnas) {
+  const tbody = $(tabla).querySelector('tbody');
+  tbody.innerHTML = filas.length
+    ? filas.map((f) => `<tr>${columnas.map((c) => `<td>${c(f) ?? ''}</td>`).join('')}</tr>`).join('')
+    : `<tr><td colspan="${columnas.length}" style="opacity:.6">Sin registros visibles para tu rol.</td></tr>`;
+}
+
+async function cargar(sesion) {
+  $('login').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('quien').textContent = sesion.user.email;
+
+  const { data: perfil } = await sb.from('user_roles').select('rol').eq('user_id', sesion.user.id).maybeSingle();
+  const rol = perfil?.rol ?? 'sin rol';
+  $('mi-rol').textContent = rol;
+  $('mi-rol').title = GOVERNANCE.roles[rol]?.permisos.join(', ') ?? 'sin permisos';
+
+  const { data: donaciones = [] } = await sb.from('donaciones')
+    .select('id,nombre,email,monto,moneda,aura,correo_enviado,created_at')
+    .order('created_at', { ascending: false }).limit(100);
+  pintar('t-donaciones', donaciones ?? [], [
+    (d) => d.id, (d) => d.nombre, (d) => d.email,
+    (d) => `${d.monto} ${d.moneda}`, (d) => `+${d.aura}`,
+    (d) => d.correo_enviado ? 'sí' : 'no', (d) => fecha(d.created_at),
+  ]);
+
+  const { data: auditoria = [] } = await sb.from('auditoria')
+    .select('evento,actor,recurso,recurso_id,created_at')
+    .order('created_at', { ascending: false }).limit(100);
+  pintar('t-auditoria', auditoria ?? [], [
+    (a) => a.evento, (a) => a.actor, (a) => a.recurso, (a) => a.recurso_id, (a) => fecha(a.created_at),
+  ]);
+}
+
+const { data: { session } } = await sb.auth.getSession();
+if (session) cargar(session);
+sb.auth.onAuthStateChange((_e, s) => { if (s) cargar(s); });
+</script>
+</body>
+</html>

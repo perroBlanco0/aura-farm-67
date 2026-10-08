@@ -1,0 +1,174 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Symbolic Arena — Sparse Engine</title>
+<style>
+:root{--navy:#0f2b52;--acc:#1a56db;--bg:#f2f5fa;--panel:#fff;--edge:#d8e0ee;--txt:#1c2b45;--dim:#5b6b85}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);height:100vh;overflow:hidden}
+#stage{position:absolute;inset:0;display:block}
+#hud{position:absolute;top:14px;right:14px;width:250px;background:var(--panel);
+     border:1px solid var(--edge);border-radius:12px;padding:14px;
+     box-shadow:0 2px 10px rgba(28,43,69,.10);font-size:12.5px}
+#hud h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim)}
+#hud .r{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed var(--edge)}
+#hud .r:last-child{border:0}
+#hud b{color:var(--navy)}
+#hud .good{color:#15803d;font-weight:700}
+#hud label{display:flex;gap:7px;align-items:center;margin-top:10px;cursor:pointer;font-weight:600;color:var(--navy)}
+#brand{position:absolute;top:14px;left:14px;background:var(--navy);color:#fff;
+       padding:10px 16px;border-radius:10px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+#brand small{display:block;font-weight:400;color:#b9c9e4;font-size:11px}
+#brand #cred{margin-top:6px;font-size:10.5px}
+#brand #cred a{color:#9fc0ff;text-decoration:none}
+#brand #cred a:hover{text-decoration:underline}
+#dead{position:absolute;inset:0;display:none;place-items:center;pointer-events:none;
+      font-size:42px;font-weight:800;color:#fff;text-shadow:0 3px 14px #000}
+#modal{position:fixed;inset:0;background:rgba(15,43,82,.55);display:grid;place-items:center;z-index:9}
+#modal .card{background:var(--panel);border-radius:14px;padding:28px 30px;width:320px;
+             box-shadow:0 12px 40px rgba(0,0,0,.3)}
+#modal h2{margin:0 0 4px;color:var(--navy)}
+#modal p{margin:0 0 14px;color:var(--dim);font-size:13px}
+#modal input[type=text]{width:100%;padding:10px;border:1px solid var(--edge);
+  border-radius:8px;font-size:15px;margin-bottom:12px}
+.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
+.sw{height:30px;border-radius:8px;cursor:pointer;border:2px solid transparent}
+.sw.on{border-color:var(--navy)}
+#enter{width:100%;padding:12px;border:0;border-radius:9px;font-size:15px;font-weight:700;
+  color:#fff;background:linear-gradient(135deg,#2b5fd9,#1a56db);cursor:pointer}
+</style></head><body>
+<canvas id="stage"></canvas>
+<div id="brand">Symbolic Arena<small>Sparse Engine · árbitro HDC en CPU · cero GPU</small>
+<small id="cred">creado por <b>Byron González</b> · <a href="https://github.com/perroBlanco0" target="_blank" rel="noopener">GitHub</a> · <a href="https://www.linkedin.com/in/byrongonzalezcalquin" target="_blank" rel="noopener">LinkedIn</a></small></div>
+<div id="hud"><h3>Telemetría</h3>
+  <div class="r"><span>FPS cliente</span><b id="tfps">—</b></div>
+  <div class="r"><span>Ticks servidor</span><b id="ttps">—</b></div>
+  <div class="r"><span>Bots activos (HDC)</span><b id="tbots">20</b></div>
+  <div class="r"><span>GPU en servidor</span><b class="good">0.0%</b></div>
+  <div class="r"><span>Paquete por tick</span><b id="tbytes">—</b></div>
+  <div class="r"><span>Tu masa</span><b id="tmass">—</b></div>
+  <label><input type="checkbox" id="sensors"> Visión de Sensores HDC</label>
+</div>
+<div id="dead"></div>
+<div id="modal"><div class="card">
+  <h2>Entrar a la Arena</h2>
+  <p>Mundo 2000×2000 · 20 bots con cerebro simbólico · comida, caza y huida — todo en CPU.</p>
+  <input type="text" id="nick" maxlength="16" placeholder="Tu nickname" autocomplete="off">
+  <div class="swatches" id="swatches"></div>
+  <button id="enter">⚡ Entrar a la Arena</button>
+</div></div>
+<script>
+const WS_PORT = 4002;
+// ?ws=wss://host  → override del endpoint del daemon (para previews/proxies)
+const WS_URL = new URLSearchParams(location.search).get('ws');
+const cv=document.getElementById('stage'),ctx=cv.getContext('2d');
+let W=2000,H=2000,VISION=350;
+let me=null,cells={},food={},meta={},dead=false;
+let ws=null,bytesPerTick=0,msgs=0,msgCount=0,tps=0;
+let fpsN=0,fps=0,lastFpsT=performance.now();
+const COLORS=['#e02424','#1a56db','#15803d','#b45309','#7c3aed','#0e7490','#be185d','#4d7c0f','#c2410c','#4338ca','#0f766e','#a21caf'];
+let myColor=COLORS[1];
+const sw=document.getElementById('swatches');
+COLORS.forEach((c,i)=>{const d=document.createElement('div');d.className='sw'+(i===1?' on':'');
+ d.style.background=c;d.onclick=()=>{document.querySelectorAll('.sw').forEach(x=>x.classList.remove('on'));d.classList.add('on');myColor=c;};sw.appendChild(d);});
+function resize(){cv.width=innerWidth;cv.height=innerHeight;}
+addEventListener('resize',resize);resize();
+
+document.getElementById('nick').addEventListener('keydown',e=>{
+  if(e.key==='Enter')document.getElementById('enter').click();});
+document.getElementById('enter').onclick=()=>{
+  if(ws&&ws.readyState<2)return;   // ya conectado/conectando
+  const name=document.getElementById('nick').value.trim()||'player'+Math.floor(Math.random()*99);
+  ws=new WebSocket(WS_URL||(location.protocol.startsWith('http')
+    ? `${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws`
+    : `ws://localhost:${WS_PORT}/ws`));
+  ws.onopen=()=>ws.send(JSON.stringify({t:'join',n:name,c:myColor}));
+  ws.onmessage=e=>{
+    const m=JSON.parse(e.data);
+    bytesPerTick=e.data.length; msgCount++;
+    if(m.t==='init'){me=m.id;W=m.w;H=m.h;VISION=m.vision;dead=false;
+      for(const[i,x,y]of m.food)food[i]={x,y};
+      for(const cid in m.meta)meta[cid]={name:m.meta[cid][0],color:m.meta[cid][1],kind:m.meta[cid][2]};
+      document.getElementById('modal').style.display='none';}
+    else if(m.t==='s'){
+      const seen=new Set();
+      for(const[id,x,y,mm,d,mode]of m.cells){seen.add(id);
+        if(!cells[id])cells[id]={id,x,y,m:mm};
+        cells[id].x=x;cells[id].y=y;cells[id].m=mm;cells[id].dead=!!d;cells[id].mode=mode;}
+      for(const k of Object.keys(cells))if(!seen.has(+k))delete cells[k];
+      if(m.ev)for(const ev of m.ev){
+        if(ev.t==='food-')delete food[ev.i];
+        else if(ev.t==='food+')food[ev.i]={x:ev.x,y:ev.y};
+        else if(ev.t==='dead'){if(ev.i===me)dead=true;setTimeout(()=>{dead=false;},2100);}
+        else if(ev.t==='join')meta[ev.i]={name:ev.n,color:ev.c,kind:ev.k};
+        else if(ev.t==='leave'){delete meta[ev.i];delete cells[ev.i];}
+        else if(ev.t==='respawn'&&ev.i===me)dead=false;}
+    }
+  };
+  ws.onclose=()=>{document.getElementById('dead').textContent='CONEXIÓN PERDIDA';document.getElementById('dead').style.display='grid';};
+};
+// input: solo se envía el target del mouse
+let mx=innerWidth/2,my=innerHeight/2;
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+setInterval(()=>{
+  if(ws&&ws.readyState===1&&me&&!dead&&cells[me]){
+    const p=cells[me];
+    const wx=p.x+(mx-innerWidth/2), wy=p.y+(my-innerHeight/2);
+    ws.send(JSON.stringify({t:'in',x:Math.round(wx),y:Math.round(wy)}));
+  }
+},66);
+
+setInterval(()=>{tps=msgCount;msgCount=0;
+  document.getElementById('ttps').textContent=tps+'/s';
+  document.getElementById('tbytes').textContent=bytesPerTick+' B';
+},1000);
+setInterval(()=>{document.getElementById('tbots').textContent=
+  Object.keys(cells).filter(id=>meta[id]&&meta[id].kind==='bot'&&!cells[id].dead).length;
+  document.getElementById('tmass').textContent=cells[me]?Math.round(cells[me].m):'—';
+},500);
+
+const rad=m=>8*Math.sqrt(m);
+function draw(){
+  fpsN++;const now=performance.now();
+  if(now-lastFpsT>1000){fps=fpsN;fpsN=0;lastFpsT=now;document.getElementById('tfps').textContent=fps;}
+  ctx.fillStyle='#0d1120';ctx.fillRect(0,0,innerWidth,innerHeight);
+  let camX=W/2,camY=H/2;
+  if(me&&cells[me]){camX=cells[me].x;camY=cells[me].y;}
+  const ox=innerWidth/2-camX, oy=innerHeight/2-camY;
+  // grid
+  ctx.strokeStyle='rgba(120,140,190,.12)';ctx.lineWidth=1;
+  const gs=100;
+  for(let gx=0;gx<=W;gx+=gs){const sx=gx+ox;if(sx<-50||sx>innerWidth+50)continue;
+    ctx.beginPath();ctx.moveTo(sx,Math.max(0,oy));ctx.lineTo(sx,Math.min(innerHeight,H+oy));ctx.stroke();}
+  for(let gy=0;gy<=H;gy+=gs){const sy=gy+oy;if(sy<-50||sy>innerHeight+50)continue;
+    ctx.beginPath();ctx.moveTo(Math.max(0,ox),sy);ctx.lineTo(Math.min(innerWidth,W+ox),sy);ctx.stroke();}
+  ctx.strokeStyle='#1a56db';ctx.lineWidth=3;ctx.strokeRect(ox,oy,W,H);
+  // comida
+  for(const f of Object.values(food)){
+    const sx=f.x+ox,sy=f.y+oy;
+    if(sx<-10||sx>innerWidth+10||sy<-10||sy>innerHeight+10)continue;
+    ctx.fillStyle='#9db6e8';ctx.beginPath();ctx.arc(sx,sy,4,0,7);ctx.fill();}
+  // células
+  const showSensors=document.getElementById('sensors').checked;
+  const arr=Object.values(cells).sort((a,b)=>a.m-b.m);
+  for(const c of arr){
+    const sx=c.x+ox,sy=c.y+oy,r=rad(c.m);
+    if(sx<-r||sx>innerWidth+r||sy<-r||sy>innerHeight+r)continue;
+    const mt=meta[c.id]||{name:'',color:'#888',kind:'bot'};
+    if(showSensors&&mt.kind==='bot'&&!c.dead){
+      ctx.strokeStyle='rgba(255,255,255,.10)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(sx,sy,VISION,0,7);ctx.stroke();}
+    ctx.fillStyle=c.dead?'#333':mt.color;
+    ctx.beginPath();ctx.arc(sx,sy,r,0,7);ctx.fill();
+    ctx.strokeStyle=c.id===me?'#fff':'rgba(255,255,255,.25)';ctx.lineWidth=c.id===me?3:1.5;ctx.stroke();
+    if(r>14){ctx.fillStyle='#fff';ctx.font=`bold ${Math.min(16,r*0.5)}px Segoe UI`;
+      ctx.textAlign='center';ctx.fillText(mt.name||'',sx,sy+4);
+      if(mt.kind==='bot'&&c.mode){ctx.font='10px Segoe UI';ctx.fillStyle='rgba(255,255,255,.65)';
+        ctx.fillText('HDC:'+c.mode,sx,sy+r*0.55+8);}}
+  }
+  if(dead&&me){document.getElementById('dead').textContent='TE COMIERON — respawn…';
+    document.getElementById('dead').style.display='grid';}
+  else document.getElementById('dead').style.display='none';
+  requestAnimationFrame(draw);
+}
+draw();
+</script></body></html>
