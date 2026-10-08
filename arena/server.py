@@ -306,11 +306,39 @@ async def handler(ws):
             cells[pid]["respawn_t"] = 1e18
             broadcast_queue.append({"t": "dead", "i": pid, "by": 0})
 
+def reset_world():
+    """Mundo nuevo: 20 bots + comida, todo desde cero."""
+    global world_t
+    cells.clear(); food.clear(); world_meta.clear(); broadcast_queue.clear()
+    world_t = 0.0
+    for i in range(BOT_N):
+        cid = spawn_cell("bot")
+        meta = {"name": BOT_NAMES[i % len(BOT_NAMES)],
+                "color": f"hsl({(i * 47) % 360},70%,60%)"}
+        cells[cid]["name"], cells[cid]["color"] = meta["name"], meta["color"]
+        world_meta[cid] = meta
+    refil_food()
+
 async def loop():
     dt = 1.0 / FPS
     tps_t0 = time.perf_counter(); tps_n = 0
+    empty_since = None
+    spent = 0.0
     while True:
         t0 = time.perf_counter()
+        if not clients:
+            # sin jugadores reales: mundo en pausa (cero CPU), cola limpia;
+            # 5 min vacio -> reset total (nace mundo fresco para el proximo)
+            broadcast_queue.clear()
+            if empty_since is None:
+                empty_since = time.time()
+            elif time.time() - empty_since > 300:
+                print("mundo vacio 5min -> reset", flush=True)
+                reset_world()
+                empty_since = time.time()
+            await asyncio.sleep(0.5)
+            continue
+        empty_since = None
         tick(dt)
         if clients:
             if tick_n % 2 == 0:   # broadcast 30Hz: mitad de ancho de banda
@@ -352,13 +380,7 @@ def process_request(connection, request):
     return None  # /ws (o cualquier otro path) sigue el handshake WebSocket
 
 async def main():
-    for i in range(BOT_N):
-        cid = spawn_cell("bot")
-        meta = {"name": BOT_NAMES[i % len(BOT_NAMES)],
-                "color": f"hsl({(i * 47) % 360},70%,60%)"}
-        cells[cid]["name"], cells[cid]["color"] = meta["name"], meta["color"]
-        world_meta[cid] = meta
-    refil_food()
+    reset_world()
     import websockets
     port = int(os.environ.get("PORT", "4002"))
     async with websockets.serve(handler, "0.0.0.0", port,
