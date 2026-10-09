@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Symbolic Engine — computación simbólica hiperdimensional</title>
+<style>
+  :root{--bg:#0b0d14;--card:#141827;--line:#252b40;--txt:#dfe4f5;--dim:#8a93b0;
+        --acc:#3d7bff;--acc2:#38d39a}
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--txt);font-family:ui-monospace,Menlo,Consolas,monospace;
+       line-height:1.55}
+  .wrap{max-width:980px;margin:0 auto;padding:48px 20px 80px}
+  header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:12px}
+  h1{font-size:30px;letter-spacing:.5px}
+  h1 em{color:var(--acc);font-style:normal}
+  .tag{color:var(--dim);font-size:13px;margin-top:6px}
+  .cta{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;
+       padding:12px 22px;border-radius:8px;font-weight:700;font-size:15px}
+  .cta:hover{background:#5a8dff}
+  .ghost{color:var(--acc2);border:1px solid var(--line);padding:12px 22px;
+         border-radius:8px;text-decoration:none;font-size:15px}
+  section{margin-top:56px}
+  h2{font-size:19px;color:var(--acc2);margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+        padding:18px;overflow:hidden}
+  .card h3{font-size:15px;margin-bottom:8px}
+  .card p{font-size:13px;color:var(--dim)}
+  .card video{width:100%;border-radius:8px;margin-bottom:12px;background:#000;
+              border:1px solid var(--line);aspect-ratio:16/9}
+  .num{color:var(--acc);font-weight:700}
+  ul.metrics{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  ul.metrics li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+  ul.metrics b{display:block;font-size:22px;color:var(--acc)}
+  ul.metrics span{font-size:12px;color:var(--dim)}
+  code{background:#0d101c;padding:1px 6px;border-radius:5px;font-size:12px}
+  footer{margin-top:70px;padding-top:24px;border-top:1px solid var(--line);
+         color:var(--dim);font-size:13px}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Symbolic <em>Engine</em></h1>
+    <div class="tag">Entra un símbolo, sale un símbolo — determinista, sin entrenamiento.</div>
+  </div>
+  <div>
+    <a class="cta" href="/arena">Jugar Symbolic Arena</a>
+    <a class="ghost" href="https://github.com/perroBlanco0" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+
+<section>
+  <h2>Qué es</h2>
+  <p style="color:var(--dim);font-size:14px;max-width:720px">
+    Un resolvedor simbólico sobre vectores hiperdimensionales (10.000 bits). Las señales del
+    mundo — imagen, audio, video — se codifican como hipervectores; la decisión sale por
+    similitud simbólica en microsegundos. Sin redes neuronales, sin gradiente, sin modelo
+    estadístico: una consulta determinista que puedes auditar bit a bit.
+  </p>
+</section>
+
+<section>
+  <h2>Poderes — cada uno con su demo en video</h2>
+  <div class="grid">
+    <div class="card">
+      <video src="/media/poder_imagen.mp4" controls loop muted playsinline preload="metadata"></video>
+      <h3>Visión sin entrenamiento</h3>
+      <p>Posición × intensidad → hipervector. Clasifica formas <b class="num">one-shot</b>:
+        <span class="num">100%</span> de acierto con traslación y ruido, con UN solo ejemplo por clase.</p>
+    </div>
+    <div class="card">
+      <video src="/media/poder_audio.mp4" controls loop muted playsinline preload="metadata"></video>
+      <h3>Oído simbólico</h3>
+      <p>Energía por bandas → hipervector ordenado en el tiempo. Tono, ruido y barrido
+        reconocidos con 2 ejemplos por clase — sin espectrograma, sin red.</p>
+    </div>
+    <div class="card">
+      <video src="/media/poder_delta.mp4" controls loop muted playsinline preload="metadata"></video>
+      <h3>Lee el stream de deltas</h3>
+      <p>El propio códec sparse emite símbolos: el resolvedor los lee directo y distingue
+        <i>calma</i> de <i>explosión</i> con <span class="num">100%</span> one-shot.
+        Video que se entiende a sí mismo.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Arena en vivo</h2>
+  <p style="color:var(--dim);font-size:14px;max-width:720px;margin-bottom:16px">
+    20 bots deciden con UN árbitro simbólico compartido: cada uno percibe su vecindad,
+    el árbitro resuelve el modo (huir, cazar, pastar) y actúa. Todo el mundo corre a
+    ~60 ticks/s con <code>GPU 0%</code>. Juega contra ellos:
+  </p>
+  <a class="cta" href="/arena">Entrar a la arena</a>
+</section>
+
+<section>
+  <h2>Números medidos</h2>
+  <ul class="metrics">
+    <li><b>10.000</b><span>bits por hipervector</span></li>
+    <li><b>1</b><span>ejemplo basta (one-shot)</span></li>
+    <li><b>~60</b><span>ticks/s en CPU de servidor free</span></li>
+    <li><b>0%</b><span>GPU — puro cómputo simbólico</span></li>
+  </ul>
+</section>
+
+<footer>
+  creado por <b>Byron González</b> ·
+  <a href="https://github.com/perroBlanco0" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://www.linkedin.com/in/byron-rodrigo-gonz%C3%A1lez-calquin-4606151ab/" target="_blank" rel="noopener">LinkedIn</a>
+</footer>
+</div>
+</body>
+</html>

@@ -364,19 +364,33 @@ async def loop():
         while time.perf_counter() < deadline:   # guardia: timers flojos en esta VM
             await asyncio.sleep(0)
 
-INDEX_HTML = open(os.path.join(os.path.dirname(__file__), "index.html"),
-                  encoding="utf-8").read()
+_HERE = os.path.dirname(os.path.abspath(__file__))
+INDEX_HTML = open(os.path.join(_HERE, "index.html"), encoding="utf-8").read()
+LANDING_HTML = open(os.path.join(_HERE, "landing.html"), encoding="utf-8").read()
+MEDIA_DIR = os.path.join(_HERE, "media")
 
 def process_request(connection, request):
-    """HTTP y WS en el mismo puerto: GET / sirve el frontend; el resto es WS.
-    Así el preview/proxy usa un solo origen (una cookie de auth basta)."""
+    """HTTP y WS en el mismo puerto: / = landing, /arena = juego,
+    /media/*.mp4 = videos de demos; /ws sigue el handshake WebSocket."""
     path = request.path.split("?")[0]
-    if path in ("/", "/index.html"):
+    if path in ("/", "/index.html", "/arena"):
         if "websocket" in request.headers.get("Upgrade", "").lower():
             return connection.respond(400, "Usa /ws para WebSocket\n")
-        resp = connection.respond(200, INDEX_HTML)
+        html = INDEX_HTML if path == "/arena" else LANDING_HTML
+        resp = connection.respond(200, html)
         resp.headers["Content-Type"] = "text/html; charset=utf-8"
         return resp
+    if path.startswith("/media/"):
+        name = os.path.basename(path)
+        fp = os.path.join(MEDIA_DIR, name)
+        if name.endswith(".mp4") and os.path.isfile(fp):
+            with open(fp, "rb") as f:
+                body = f.read()
+            resp = connection.respond(200, body)
+            resp.headers["Content-Type"] = "video/mp4"
+            resp.headers["Cache-Control"] = "public, max-age=86400"
+            return resp
+        return connection.respond(404, "not found\n")
     return None  # /ws (o cualquier otro path) sigue el handshake WebSocket
 
 async def main():
