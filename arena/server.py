@@ -386,10 +386,11 @@ def process_request(connection, request):
         if name.endswith(".mp4") and os.path.isfile(fp):
             with open(fp, "rb") as f:
                 body = f.read()
-            resp = connection.respond(200, body)
-            resp.headers["Content-Type"] = "video/mp4"
-            resp.headers["Cache-Control"] = "public, max-age=86400"
-            return resp
+            from websockets.datastructures import Headers
+            from websockets.http11 import Response
+            return Response(200, "OK", Headers(
+                [("Content-Type", "video/mp4"),
+                 ("Cache-Control", "public, max-age=86400")]), body)
         return connection.respond(404, "not found\n")
     return None  # /ws (o cualquier otro path) sigue el handshake WebSocket
 
